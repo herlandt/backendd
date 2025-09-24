@@ -1,8 +1,7 @@
 # condominio/serializers.py
 
 from rest_framework import serializers
-from .models import Propiedad, AreaComun
-# Importamos UserSerializer desde su nuevo archivo
+from .models import Aviso, Propiedad, AreaComun
 from usuarios.common_serializers import UserSerializer # <-- 2. CAMBIA ESTA LÍNEA
 
 class PropiedadSerializer(serializers.ModelSerializer):
@@ -16,3 +15,8 @@ class AreaComunSerializer(serializers.ModelSerializer):
     class Meta:
         model = AreaComun
         fields = ['id', 'nombre', 'descripcion', 'capacidad', 'costo_reserva', 'horario_apertura', 'horario_cierre']
+
+class AvisoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Aviso
+        fields = '__all__'
