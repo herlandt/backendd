@@ -20,7 +20,6 @@ class ResidenteSerializer(serializers.ModelSerializer):
         user_data = validated_data.pop('usuario')
         password = user_data.pop('password', None)
         
-        # Validar si el usuario o email ya existen antes de crear
         if User.objects.filter(username=user_data['username']).exists():
             raise serializers.ValidationError({'detail': 'Ya existe un usuario con este username.'})
         if User.objects.filter(email=user_data['email']).exists():
