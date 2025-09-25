@@ -1,19 +1,25 @@
+# Fichero: usuarios/views.py
+
 from rest_framework import viewsets, generics, permissions
 from django.contrib.auth.models import User
 from .models import Residente
-from .serializers import ResidenteSerializer, RegistroSerializer
+# CORRECCIÓN: Solo importamos los serializadores que existen
+from .serializers import ResidenteSerializer, RegistroSerializer 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
 class ResidenteViewSet(viewsets.ModelViewSet):
     queryset = Residente.objects.all()
-    serializer_class = ResidenteSerializer
+    serializer_class = ResidenteSerializer # Usamos el serializador unificado
+    permission_classes = [permissions.IsAdminUser] # Solo admins pueden gestionar residentes
+
 
 class RegistroView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistroSerializer
     permission_classes = [permissions.IsAdminUser]
+
 
 class RegistrarDispositivoView(APIView):
     permission_classes = [permissions.IsAuthenticated]

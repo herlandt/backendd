@@ -1,10 +1,23 @@
+# Fichero: finanzas/serializers.py
+
 from rest_framework import serializers
 from .models import Gasto, Pago, Reserva
+from condominio.serializers import PropiedadSerializer # Importamos para mostrar el detalle al leer
 
 class GastoSerializer(serializers.ModelSerializer):
+    # Para LEER: Muestra los detalles completos de la propiedad, no solo el ID.
+    propiedad = PropiedadSerializer(read_only=True)
+    # Para ESCRIBIR: Acepta un simple ID para la propiedad.
+    propiedad_id = serializers.IntegerField(write_only=True)
+
     class Meta:
         model = Gasto
-        fields = ['id', 'monto', 'fecha_emision', 'fecha_vencimiento', 'descripcion', 'pagado']
+        # Añadimos 'propiedad' (para lectura) y 'propiedad_id' (para escritura)
+        fields = ['id', 'propiedad', 'propiedad_id', 'monto', 'fecha_emision', 'fecha_vencimiento', 'descripcion', 'pagado']
+
+    def create(self, validated_data):
+        # Usamos 'propiedad_id' para crear la relación con la propiedad correcta
+        return Gasto.objects.create(**validated_data)
 
 class PagoSerializer(serializers.ModelSerializer):
     usuario = serializers.ReadOnlyField(source='usuario.username')
