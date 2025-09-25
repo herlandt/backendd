@@ -1,15 +1,18 @@
 # condominio/serializers.py
 
+# condominio/serializers.py
 from rest_framework import serializers
 from .models import Aviso, Propiedad, AreaComun
-from usuarios.common_serializers import UserSerializer # <-- 2. CAMBIA ESTA LÍNEA
+# ¡CAMBIO 3! Apuntamos al nuevo fichero común.
+from usuarios.common_serializers import UserReadSerializer
 
 class PropiedadSerializer(serializers.ModelSerializer):
-    propietario = UserSerializer(read_only=True)
+    propietario = UserReadSerializer(read_only=True)
     class Meta:
         model = Propiedad
         fields = ['id', 'numero_casa', 'propietario', 'metros_cuadrados']
 
+# ... (El resto del fichero se queda igual) ...
 class AreaComunSerializer(serializers.ModelSerializer):
     # ... (esta clase se queda igual) ...
     class Meta:

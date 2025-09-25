@@ -8,17 +8,27 @@ from .serializers import ResidenteReadSerializer, ResidenteWriteSerializer, Regi
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework import viewsets, permissions
+from .models import Residente
+from .serializers import ResidenteReadSerializer, ResidenteWriteSerializer, RegistroSerializer
 
 class ResidenteViewSet(viewsets.ModelViewSet):
     queryset = Residente.objects.all()
     permission_classes = [permissions.IsAdminUser]
 
-    # Lógica para usar un serializador diferente para leer vs. escribir
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return ResidenteWriteSerializer
-        return ResidenteReadSerializer # Usar para GET (list/retrieve)
+        return ResidenteReadSerializer
 
+    # --- ¡LA SOLUCIÓN ESTÁ AQUÍ! ---
+    def perform_destroy(self, instance):
+        # 'instance' es el objeto Residente que se va a eliminar.
+        # Obtenemos el usuario asociado y lo eliminamos primero.
+        user = instance.usuario
+        # El objeto Residente se eliminará automáticamente en cascada
+        # porque el 'on_delete' está en el modelo User.
+        user.delete()
 class RegistroView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegistroSerializer

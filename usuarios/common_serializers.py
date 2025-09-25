@@ -1,16 +1,10 @@
 # usuarios/common_serializers.py
-
-from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
 
-class UserSerializer(serializers.ModelSerializer):  # solo lectura
+# Este serializador es usado por otras apps, por eso vive en un fichero común.
+class UserReadSerializer(serializers.ModelSerializer):
+    """Muestra la información del usuario de forma segura y legible."""
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email']
-
-class UserWriteSerializer(serializers.ModelSerializer):  # escritura (registro, update)
-    password = serializers.CharField(write_only=True, required=False)
-
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
+        fields = ['id', 'username', 'email']
