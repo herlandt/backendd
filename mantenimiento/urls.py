@@ -1,8 +1,14 @@
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import PersonalMantenimientoViewSet, SolicitudMantenimientoViewSet
+
+# Importamos únicamente el ViewSet que estamos usando
+from .views import SolicitudMantenimientoViewSet
 
 router = DefaultRouter()
-router.register(r'personal', PersonalMantenimientoViewSet)
-router.register(r'solicitudes', SolicitudMantenimientoViewSet, basename='solicitud_mantenimiento')
 
-urlpatterns = router.urls
+# Registramos únicamente la ruta para las solicitudes de mantenimiento
+router.register(r'solicitudes', SolicitudMantenimientoViewSet, basename='solicitudmantenimiento')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]

@@ -1,36 +1,49 @@
-from rest_framework import viewsets, permissions
-from rest_framework.exceptions import ValidationError
-from .models import PersonalMantenimiento, SolicitudMantenimiento
-from .serializers import PersonalMantenimientoSerializer, SolicitudMantenimientoSerializer
+from rest_framework import viewsets, permissions, status, serializers
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import SolicitudMantenimiento
+from .serializers import SolicitudMantenimientoSerializer
+from .permissions import IsMantenimientoOrAdminUser
 from usuarios.models import Residente
-
-class PersonalMantenimientoViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = PersonalMantenimiento.objects.filter(activo=True)
-    serializer_class = PersonalMantenimientoSerializer
-    permission_classes = [permissions.IsAdminUser]
 
 class SolicitudMantenimientoViewSet(viewsets.ModelViewSet):
     serializer_class = SolicitudMantenimientoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    # mantenimiento/views.py
+    queryset = SolicitudMantenimiento.objects.all()
 
     def get_queryset(self):
-        # Si el usuario es superusuario o staff, puede ver todas las solicitudes
-        if self.request.user.is_superuser or self.request.user.is_staff:
-            return SolicitudMantenimiento.objects.all().order_by('-fecha_creacion')
-        
-        # Si es un residente normal, solo ve las de su propiedad
-        try:
-            residente = Residente.objects.get(usuario=self.request.user)
-            return SolicitudMantenimiento.objects.filter(propiedad=residente.propiedad).order_by('-fecha_creacion')
-        except Residente.DoesNotExist:
-            return SolicitudMantenimiento.objects.none() # No devuelve nada si no es residente
+        user = self.request.user
+        if hasattr(user, 'residente'):
+            return SolicitudMantenimiento.objects.filter(solicitado_por=user.residente)
+        # Usamos la comprobación correcta para el personal de mantenimiento
+        elif hasattr(user, 'perfil_mantenimiento') or user.is_staff:
+            return SolicitudMantenimiento.objects.all()
+        return SolicitudMantenimiento.objects.none()
+
     def perform_create(self, serializer):
         try:
             residente = Residente.objects.get(usuario=self.request.user)
-            serializer.save(
-                solicitado_por=self.request.user,
-                propiedad=residente.propiedad
-            )
+            serializer.save(solicitado_por=residente)
         except Residente.DoesNotExist:
-            raise ValidationError("Solo los residentes pueden crear solicitudes.")
+            raise serializers.ValidationError("El usuario no es un residente válido.")
+
+    def get_permissions(self):
+        if self.action in ['update', 'partial_update', 'destroy', 'actualizar_estado']:
+            permission_classes = [IsMantenimientoOrAdminUser]
+        else:
+            permission_classes = [permissions.IsAuthenticated]
+        return [permission() for permission in permission_classes]
+
+    @action(detail=True, methods=['post'], url_path='actualizar-estado')
+    def actualizar_estado(self, request, pk=None):
+        solicitud = self.get_object()
+        nuevo_estado = request.data.get('estado')
+
+        # Usamos el nombre correcto de la variable de opciones
+        valid_estados = [choice[0] for choice in SolicitudMantenimiento.ESTADO_OPCIONES]
+        if nuevo_estado not in valid_estados:
+            return Response({'error': f'Estado no válido. Opciones: {valid_estados}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        solicitud.estado = nuevo_estado
+        solicitud.save()
+        serializer = self.get_serializer(solicitud)
+        return Response(serializer.data)

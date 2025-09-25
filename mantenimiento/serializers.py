@@ -1,21 +1,24 @@
 from rest_framework import serializers
-from .models import PersonalMantenimiento, SolicitudMantenimiento
-from .models import Mantenimiento
-class PersonalMantenimientoSerializer(serializers.ModelSerializer):
-    usuario = serializers.ReadOnlyField(source='usuario.username')
-    class Meta:
-        model = PersonalMantenimiento
-        fields = ['id', 'usuario', 'especialidad']
+from .models import SolicitudMantenimiento
+
+# Este es el único serializador que debe estar en este archivo.
+# Se han eliminado las importaciones y clases que causaban el error.
 
 class SolicitudMantenimientoSerializer(serializers.ModelSerializer):
-    solicitado_por = serializers.ReadOnlyField(source='solicitado_por.username')
-    propiedad_numero = serializers.ReadOnlyField(source='propiedad.numero_casa')
+    solicitado_por = serializers.StringRelatedField(read_only=True)
+    propiedad_numero = serializers.StringRelatedField(source='propiedad.numero_casa', read_only=True)
+    # Hacemos que el campo 'asignado_a' muestre el nombre de usuario
+    asignado_a = serializers.StringRelatedField(read_only=True)
+
     class Meta:
         model = SolicitudMantenimiento
-        fields = ['id', 'solicitado_por', 'propiedad_numero', 'titulo', 'descripcion', 'estado', 'fecha_creacion', 'asignado_a']
-
-class MantenimientoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Mantenimiento
-        fields = '__all__'
-        read_only_fields = ('estado', 'fecha_solicitud', 'fecha_finalizacion', 'personal_mantenimiento')
+        fields = [
+            'id',
+            'solicitado_por',
+            'propiedad_numero',
+            'titulo',
+            'descripcion',
+            'estado',
+            'fecha_creacion',
+            'asignado_a'
+        ]
