@@ -1,8 +1,6 @@
-from decimal import Decimal
 from django.db import models
-from django.db.models import Sum
 from django.contrib.auth import get_user_model
-from condominio.models import Propiedad, AreaComun
+from condominio.models import Propiedad, AreaComun  # ajusta si el nombre difiere
 
 User = get_user_model()
 
@@ -10,48 +8,95 @@ User = get_user_model()
 class Gasto(models.Model):
     propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name='gastos')
     monto = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # usamos fecha_emision como la “fecha” principal del gasto
     fecha_emision = models.DateField()
     fecha_vencimiento = models.DateField(null=True, blank=True)
+
     descripcion = models.TextField(blank=True)
     pagado = models.BooleanField(default=False)
 
-    # No forzamos unicidad por mes/año para permitir varios gastos en el mismo mes
+    # mes/año se guardan para facilitar filtros; se rellenan automáticamente
     mes = models.PositiveSmallIntegerField()
     anio = models.PositiveIntegerField()
 
     def save(self, *args, **kwargs):
-        # Completa mes/año a partir de fecha_emision si vienen vacíos
-        if self.fecha_emision and (not self.mes or self.mes == 0):
+        # completa mes/año desde fecha_emision si faltan
+        if self.fecha_emision and not self.mes:
             self.mes = self.fecha_emision.month
-        if self.fecha_emision and (not self.anio or self.anio == 0):
+        if self.fecha_emision and not self.anio:
             self.anio = self.fecha_emision.year
         super().save(*args, **kwargs)
 
-    # --- Ayudantes útiles ---
-    @property
-    def total_pagado(self) -> Decimal:
-        return self.pagos.aggregate(s=Sum('monto_pagado'))['s'] or Decimal('0')
-
-    @property
-    def saldo(self) -> Decimal:
-        return (self.monto or Decimal('0')) - self.total_pagado
+    class Meta:
+        # Permitimos varios gastos por (propiedad, mes, anio)
+        # por eso NO definimos unique_together aquí.
+        ordering = ('-anio', '-mes', 'propiedad_id')
 
     def __str__(self):
-        return f"Gasto #{self.pk} - Prop {self.propiedad_id} - {self.mes}/{self.anio}"
+        return f"Gasto {self.propiedad} {self.mes}/{self.anio} - {self.monto}"
 
 
 class Pago(models.Model):
+    # Pago de GASTO
     gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, related_name='pagos')
-    usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='pagos',
-                                null=True, blank=True)
+    usuario = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='pagos',
+        null=True, blank=True
+    )
     monto_pagado = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_pago = models.DateField(auto_now_add=True)
     comprobante = models.FileField(upload_to='comprobantes/', null=True, blank=True)
 
     def __str__(self):
-        return f"Pago #{self.pk} -> Gasto {self.gasto_id} ({self.monto_pagado})"
+        return f"Pago {self.monto_pagado} de {self.gasto}"
 
 
+# --------- MULTAS ---------
+class Multa(models.Model):
+    propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name='multas')
+    concepto = models.CharField(max_length=255, default='General', blank=True) 
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+
+    fecha_emision = models.DateField()
+    fecha_vencimiento = models.DateField(null=True, blank=True)
+
+    descripcion = models.TextField(blank=True)
+    pagado = models.BooleanField(default=False)
+
+    mes = models.PositiveSmallIntegerField()
+    anio = models.PositiveIntegerField()
+
+    def save(self, *args, **kwargs):
+        if self.fecha_emision and not self.mes:
+            self.mes = self.fecha_emision.month
+        if self.fecha_emision and not self.anio:
+            self.anio = self.fecha_emision.year
+        super().save(*args, **kwargs)
+
+    class Meta:
+        ordering = ('-anio', '-mes', 'propiedad_id')
+
+    def __str__(self):
+        return f"Multa {self.propiedad} {self.concepto} {self.mes}/{self.anio} - {self.monto}"
+
+
+class PagoMulta(models.Model):
+    # Pago de MULTA
+    multa = models.ForeignKey(Multa, on_delete=models.CASCADE, related_name='pagos')
+    usuario = models.ForeignKey(
+        User, on_delete=models.PROTECT, related_name='pagos_multas',
+        null=True, blank=True
+    )
+    monto_pagado = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_pago = models.DateField(auto_now_add=True)
+    comprobante = models.FileField(upload_to='comprobantes_multas/', null=True, blank=True)
+
+    def __str__(self):
+        return f"PagoMulta {self.monto_pagado} de {self.multa}"
+
+
+# --------- RESERVAS ---------
 class Reserva(models.Model):
     area_comun = models.ForeignKey(AreaComun, on_delete=models.CASCADE, related_name='reservas')
     usuario = models.ForeignKey(User, on_delete=models.PROTECT, related_name='reservas')

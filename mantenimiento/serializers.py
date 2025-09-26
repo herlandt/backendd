@@ -1,24 +1,56 @@
 from rest_framework import serializers
-from .models import SolicitudMantenimiento
+from condominio.models import Propiedad
+from .models import PersonalMantenimiento, SolicitudMantenimiento
 
-# Este es el único serializador que debe estar en este archivo.
-# Se han eliminado las importaciones y clases que causaban el error.
+
+class PersonalMantenimientoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PersonalMantenimiento
+        fields = ["id", "nombre", "telefono", "especialidad", "activo"]
+
 
 class SolicitudMantenimientoSerializer(serializers.ModelSerializer):
-    solicitado_por = serializers.StringRelatedField(read_only=True)
-    propiedad_numero = serializers.StringRelatedField(source='propiedad.numero_casa', read_only=True)
-    # Hacemos que el campo 'asignado_a' muestre el nombre de usuario
-    asignado_a = serializers.StringRelatedField(read_only=True)
+    # Lecturas “bonitas”
+    solicitado_por = serializers.ReadOnlyField(source="solicitado_por.username")
+    propiedad_numero = serializers.ReadOnlyField(source="propiedad.numero_casa")
+    asignado_a_nombre = serializers.ReadOnlyField(source="asignado_a.nombre")
+
+    # Escritura por ids
+    propiedad_id = serializers.PrimaryKeyRelatedField(
+        queryset=Propiedad.objects.all(), source="propiedad", write_only=True, required=True
+    )
+    asignado_a_id = serializers.PrimaryKeyRelatedField(
+        queryset=PersonalMantenimiento.objects.filter(activo=True),
+        source="asignado_a",
+        allow_null=True,
+        required=False,
+        write_only=True,
+    )
+
+    # ⚠️ Habilitamos escritura de estado
+    estado = serializers.ChoiceField(
+        choices=SolicitudMantenimiento.ESTADOS, required=False
+    )
 
     class Meta:
         model = SolicitudMantenimiento
         fields = [
-            'id',
-            'solicitado_por',
-            'propiedad_numero',
-            'titulo',
-            'descripcion',
-            'estado',
-            'fecha_creacion',
-            'asignado_a'
+            "id",
+            "solicitado_por",
+            "propiedad_numero",
+            "titulo",
+            "descripcion",
+            "estado",
+            "asignado_a_nombre",
+            "fecha_creacion",
+            "fecha_actualizacion",
+            # ids de escritura
+            "propiedad_id",
+            "asignado_a_id",
         ]
+        read_only_fields = ["fecha_creacion", "fecha_actualizacion", "solicitado_por"]
+
+    def create(self, validated_data):
+        # el usuario viene del request
+        user = self.context["request"].user
+        return SolicitudMantenimiento.objects.create(solicitado_por=user, **validated_data)
