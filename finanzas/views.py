@@ -1,111 +1,223 @@
-# Fichero: finanzas/views.py
-
-from datetime import date
-from rest_framework import viewsets, permissions, status
+from decimal import Decimal, InvalidOperation
+from datetime import datetime, date
+from django.db.models import Sum, Q
+from django.utils import timezone
+from django.db import IntegrityError, transaction
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from django.db.models import Q
+
 from .models import Gasto, Pago, Reserva
 from .serializers import GastoSerializer, PagoSerializer, ReservaSerializer
-from usuarios.models import Residente
 from condominio.models import Propiedad
 
+
 class GastoViewSet(viewsets.ModelViewSet):
+    queryset = Gasto.objects.select_related('propiedad').all()
     serializer_class = GastoSerializer
-    permission_classes = [permissions.IsAuthenticated]
 
+    # -------- Filtros en /gastos/ --------
     def get_queryset(self):
-        user = self.request.user
-        
-        # SOLUCIÓN: Si el usuario es administrador (staff), devuelve todos los gastos.
-        if user.is_staff:
-            return Gasto.objects.all().order_by('-fecha_vencimiento')
-        
-        # Si no, se ejecuta la lógica original para residentes.
-        try:
-            propiedades_usuario = Residente.objects.filter(usuario=user).values_list('propiedad', flat=True)
-            return Gasto.objects.filter(propiedad__in=propiedades_usuario).order_by('-fecha_vencimiento')
-        except Residente.DoesNotExist:
-            return Gasto.objects.none()
+        qs = super().get_queryset()
 
-    @action(detail=True, methods=['post'])
-    def pagar(self, request, pk=None):
-        gasto = self.get_object()
-        if gasto.pagado:
-            return Response({'status': 'este gasto ya fue pagado'}, status=status.HTTP_400_BAD_REQUEST)
-        gasto.pagado = True
-        gasto.save()
-        Pago.objects.create(
-            gasto=gasto, usuario=request.user, monto_pagado=gasto.monto,
-            comprobante=f"SIMULADO-{gasto.id}-{request.user.id}"
-        )
-        return Response({'status': 'pago registrado con éxito'})
+        p = self.request.query_params
+        if p.get('propiedad_id'):
+            qs = qs.filter(propiedad_id=p.get('propiedad_id'))
+        if p.get('mes'):
+            qs = qs.filter(mes=p.get('mes'))
+        if p.get('anio'):
+            qs = qs.filter(anio=p.get('anio'))
+        if p.get('pagado') in ('true', 'false'):
+            qs = qs.filter(pagado=(p.get('pagado') == 'true'))
+        if p.get('vencido') == 'true':
+            hoy = date.today()
+            qs = qs.filter(pagado=False, fecha_vencimiento__lt=hoy)
 
-    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAdminUser])
+        return qs.order_by('-anio', '-mes', 'propiedad_id')
+
+    # -------- Crear gastos del mes para propiedades (todas u opcionales) --------
+    @action(detail=False, methods=['post'], url_path='crear_mensual')
     def crear_mensual(self, request):
-        # ... (esta lógica ya es correcta) ...
-        descripcion = request.data.get('descripcion')
-        monto = request.data.get('monto')
-        fecha_vencimiento_str = request.data.get('fecha_vencimiento')
-        if not all([descripcion, monto, fecha_vencimiento_str]):
-            return Response({'error': 'Faltan datos'}, status=status.HTTP_400_BAD_REQUEST)
+        descripcion = (request.data.get('descripcion') or '').strip()
+        monto_raw = request.data.get('monto')
+        fecha_str = request.data.get('fecha') or request.data.get('fecha_emision')
+        venc_str = request.data.get('fecha_vencimiento')
+        prop_ids = request.data.get('propiedad_ids')  # opcional: lista de IDs (si no, todos)
+
+        # monto
+        if not monto_raw:
+            return Response({'detail': 'monto es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            fecha_vencimiento = date.fromisoformat(fecha_vencimiento_str)
-        except ValueError:
-            return Response({'error': 'Formato de fecha debe ser AAAA-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
-        propiedades = Propiedad.objects.all()
-        for propiedad in propiedades:
-            Gasto.objects.create(
-                propiedad=propiedad, monto=monto, fecha_vencimiento=fecha_vencimiento,
-                descripcion=descripcion, pagado=False
+            monto = Decimal(str(monto_raw))
+            if monto <= 0:
+                return Response({'detail': 'monto debe ser > 0.'}, status=status.HTTP_400_BAD_REQUEST)
+        except InvalidOperation:
+            return Response({'detail': 'monto inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # fecha emisión (para definir mes/anio)
+        if fecha_str:
+            try:
+                fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({'detail': 'fecha inválida. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            fecha = timezone.now().date()
+
+        # fecha vencimiento (opcional)
+        fecha_vencimiento = None
+        if venc_str:
+            try:
+                fecha_vencimiento = datetime.strptime(venc_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response({'detail': 'fecha_vencimiento inválida. Use YYYY-MM-DD.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        mes = fecha.month
+        anio = fecha.year
+
+        creados, duplicados, errores = 0, [], []
+
+        props = Propiedad.objects.filter(id__in=prop_ids) if prop_ids else Propiedad.objects.all()
+        for prop in props:
+            try:
+                Gasto.objects.create(
+                    propiedad=prop,
+                    monto=monto,
+                    fecha_emision=fecha,
+                    fecha_vencimiento=fecha_vencimiento,
+                    descripcion=descripcion,
+                    pagado=False,
+                    mes=mes,
+                    anio=anio,
+                )
+                creados += 1
+            except IntegrityError:
+                duplicados.append(prop.id)
+            except Exception as e:
+                errores.append({'propiedad_id': prop.id, 'error': str(e)})
+
+        payload = {
+            'status': f'Gastos creados: {creados}',
+            'mes': mes,
+            'anio': anio,
+            'duplicados': duplicados,
+            'errores': errores
+        }
+        http_status = status.HTTP_201_CREATED if creados else status.HTTP_200_OK
+        return Response(payload, status=http_status)
+
+    # -------- Registrar pago (individual). Permite parcial con "monto" --------
+    @action(detail=True, methods=['post'], url_path='registrar_pago')
+    def registrar_pago(self, request, pk=None):
+        gasto = self.get_object()
+        # monto opcional. Si no viene, paga el total restante.
+        raw = request.data.get('monto')
+        restante = gasto.saldo
+
+        if restante <= 0:
+            return Response({'detail': 'El gasto no tiene saldo.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if raw is None:
+            monto = restante
+        else:
+            try:
+                monto = Decimal(str(raw))
+            except InvalidOperation:
+                return Response({'detail': 'monto inválido.'}, status=status.HTTP_400_BAD_REQUEST)
+            if monto <= 0 or monto > restante:
+                return Response({'detail': f'El monto debe ser > 0 y <= saldo ({restante}).'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            pago = Pago.objects.create(
+                gasto=gasto,
+                usuario=request.user if request.user.is_authenticated else None,
+                monto_pagado=monto
             )
-        return Response({'status': f'Se crearon {propiedades.count()} gastos con éxito'}, status=status.HTTP_201_CREATED)
+            # refrescamos saldo/pagado
+            gasto.refresh_from_db()
+            if gasto.saldo <= 0:
+                gasto.pagado = True
+                gasto.save(update_fields=['pagado'])
 
-class PagoViewSet(viewsets.ReadOnlyModelViewSet):
+        return Response(PagoSerializer(pago).data, status=status.HTTP_201_CREATED)
+
+    # -------- Registrar pagos masivos (paga el saldo de cada gasto) --------
+    @action(detail=False, methods=['post'], url_path='registrar_pagos')
+    def registrar_pagos(self, request):
+        ids = request.data.get('gasto_ids') or []
+        if not isinstance(ids, list) or not ids:
+            return Response({'detail': 'gasto_ids debe ser una lista con IDs.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        creados, omitidos, errores = [], [], []
+        for g in Gasto.objects.filter(id__in=ids):
+            try:
+                if g.saldo <= 0:
+                    omitidos.append(g.id)
+                    continue
+                pago = Pago.objects.create(
+                    gasto=g,
+                    usuario=request.user if request.user.is_authenticated else None,
+                    monto_pagado=g.saldo
+                )
+                g.refresh_from_db()
+                if g.saldo <= 0 and not g.pagado:
+                    g.pagado = True
+                    g.save(update_fields=['pagado'])
+                creados.append({'gasto_id': g.id, 'pago_id': pago.id})
+            except Exception as e:
+                errores.append({'gasto_id': g.id, 'error': str(e)})
+
+        return Response({
+            'pagos_creados': creados,
+            'omitidos_sin_saldo': omitidos,
+            'errores': errores
+        }, status=status.HTTP_201_CREATED if creados else status.HTTP_200_OK)
+
+    # -------- Deudas / pendientes --------
+    @action(detail=False, methods=['get'], url_path='pendientes')
+    def pendientes(self, request):
+        qs = self.get_queryset().filter(pagado=False)
+        ser = self.get_serializer(qs, many=True)
+        return Response(ser.data)
+
+    # -------- Estado de cuenta --------
+    @action(detail=False, methods=['get'], url_path='estado_cuenta')
+    def estado_cuenta(self, request):
+        propiedad_id = request.query_params.get('propiedad_id')
+        if not propiedad_id:
+            return Response({'detail': 'propiedad_id es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        qs = Gasto.objects.filter(propiedad_id=propiedad_id)
+        if request.query_params.get('mes'):
+            qs = qs.filter(mes=request.query_params.get('mes'))
+        if request.query_params.get('anio'):
+            qs = qs.filter(anio=request.query_params.get('anio'))
+
+        total_gastos = qs.aggregate(s=Sum('monto'))['s'] or Decimal('0')
+        total_pagado = Pago.objects.filter(gasto__in=qs).aggregate(s=Sum('monto_pagado'))['s'] or Decimal('0')
+        saldo = total_gastos - total_pagado
+
+        return Response({
+            'propiedad_id': int(propiedad_id),
+            'total_gastos': str(total_gastos),
+            'total_pagado': str(total_pagado),
+            'saldo': str(saldo),
+        })
+
+
+class PagoViewSet(viewsets.ModelViewSet):
+    queryset = Pago.objects.select_related('gasto', 'usuario').all()
     serializer_class = PagoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        user = self.request.user
-        # SOLUCIÓN: Si es admin, ve todos los pagos.
-        if user.is_staff:
-            return Pago.objects.all().order_by('-fecha_pago')
-        return Pago.objects.filter(usuario=user).order_by('-fecha_pago')
-
-class ReservaViewSet(viewsets.ModelViewSet):
-    serializer_class = ReservaSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    
-    def get_queryset(self):
-        user = self.request.user
-        # SOLUCIÓN: Si es admin, ve todas las reservas.
-        if user.is_staff:
-            return Reserva.objects.all().order_by('-fecha_reserva')
-        return Reserva.objects.filter(usuario=user).order_by('-fecha_reserva')
 
     def perform_create(self, serializer):
-        # ... (esta lógica ya es correcta) ...
-        area_comun = serializer.validated_data['area_comun']
-        fecha_reserva = serializer.validated_data['fecha_reserva']
-        hora_inicio = serializer.validated_data['hora_inicio']
-        hora_fin = serializer.validated_data['hora_fin']
-        if area_comun.horario_apertura and (hora_inicio < area_comun.horario_apertura or hora_fin > area_comun.horario_cierre):
-            raise ValidationError(f"El horario debe estar entre {area_comun.horario_apertura} y {area_comun.horario_cierre}.")
-        
-        conflictos = Reserva.objects.filter(
-            area_comun=area_comun,
-            fecha_reserva=fecha_reserva,
-        ).filter(
-            Q(hora_inicio__lt=hora_fin) & Q(hora_fin__gt=hora_inicio)
-        )
-        
-        if conflictos.exists():
-            raise ValidationError("Ya existe una reserva en este horario. Por favor, elige otra hora.")
-        
-        costo = area_comun.costo_reserva
-        serializer.save(
-            usuario=self.request.user,
-            costo_total=costo,
-            pagada=(costo == 0.00)
-        )
+        serializer.save(usuario=self.request.user if self.request.user.is_authenticated else None)
+
+
+class ReservaViewSet(viewsets.ModelViewSet):
+    queryset = Reserva.objects.select_related('area_comun', 'usuario').all()
+    serializer_class = ReservaSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user if self.request.user.is_authenticated else None)
