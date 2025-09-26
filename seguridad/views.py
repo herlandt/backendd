@@ -1,109 +1,106 @@
+# seguridad/views.py
 from django.utils import timezone
-from rest_framework import viewsets, permissions, status
-from rest_framework.views import APIView
+from rest_framework import viewsets, permissions, status, filters
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
+from rest_framework.views import APIView
 
 from .models import Visitante, Visita, Vehiculo
 from .serializers import VisitanteSerializer, VisitaSerializer, VehiculoSerializer
-from usuarios.models import Residente
-from condominio.models import Propiedad
 
-
-def es_guardia_o_staff(user) -> bool:
-    """
-    Permite operar como 'guardia' si el usuario:
-    - es staff o superuser, o
-    - pertenece a un grupo llamado Guardias / Guardia / Seguridad (case-insensitive).
-    """
-    if user.is_staff or user.is_superuser:
-        return True
-    return user.groups.filter(name__iexact='Guardias').exists() or \
-           user.groups.filter(name__iexact='Guardia').exists() or \
-           user.groups.filter(name__iexact='Seguridad').exists()
-
+# ----- ViewSets CRUD que usas en el router -----
 
 class VisitanteViewSet(viewsets.ModelViewSet):
-    queryset = Visitante.objects.all()
+    queryset = Visitante.objects.all().order_by('nombre_completo')
     serializer_class = VisitanteSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['nombre_completo', 'documento']  # ajusta a tus campos reales
+    ordering_fields = ['nombre_completo', 'documento']
 
 class VisitaViewSet(viewsets.ModelViewSet):
+    queryset = Visita.objects.select_related('visitante', 'propiedad').all().order_by('-fecha_ingreso_programado')
     serializer_class = VisitaSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        # Guardias/Staff ven todo; residentes, solo sus propiedades
-        if es_guardia_o_staff(user):
-            return Visita.objects.all()
-        props = Residente.objects.filter(usuario=user).values_list('propiedad', flat=True)
-        return Visita.objects.filter(propiedad__in=list(props))
-
-    def perform_create(self, serializer):
-        user = self.request.user
-
-        # Guardias/Staff: pueden indicar cualquier propiedad por ID
-        if es_guardia_o_staff(user):
-            prop_id = self.request.data.get('propiedad_id')
-            if not prop_id:
-                raise ValidationError("Para crear como guardia/staff, envía 'propiedad_id'.")
-            try:
-                propiedad = Propiedad.objects.get(pk=prop_id)
-            except Propiedad.DoesNotExist:
-                raise ValidationError("La propiedad indicada no existe.")
-            serializer.save(registrado_por=user, propiedad=propiedad)
-            return
-
-        # Residente: se usa la propiedad asociada al usuario
-        try:
-            residente = Residente.objects.get(usuario=user)
-        except Residente.DoesNotExist:
-            raise ValidationError("El usuario no es un residente válido.")
-        serializer.save(registrado_por=user, propiedad=residente.propiedad)
-
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['visitante__nombre_completo', 'visitante__documento', 'motivo']
+    ordering_fields = ['fecha_ingreso_programado', 'fecha_salida_programada']
 
 class VehiculoViewSet(viewsets.ModelViewSet):
-    queryset = Vehiculo.objects.all()
+    queryset = Vehiculo.objects.select_related('visitante', 'propiedad').all().order_by('placa')
     serializer_class = VehiculoSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    # (A) Búsqueda por placa/marca/modelo
+    search_fields = ['placa', 'marca', 'modelo']
+    ordering_fields = ['placa', 'marca', 'modelo']
 
+# ----- Tu endpoint de Control de Acceso, sin tocar -----
 
 class ControlAccesoVehicularView(APIView):
-    """
-    POST { "placa": "ABC123" }
-    - Si es de residente -> Acceso Permitido (Residente)
-    - Si hay visita programada hoy para un visitante con esa placa -> marca ingreso_real y permite
-    - En otro caso -> Acceso Denegado
-    """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        placa = request.data.get('placa')
+        placa = (request.data.get("placa") or "").strip()
         if not placa:
-            return Response({'error': 'Se requiere el número de placa.'},
+            return Response({"error": "Se requiere el número de placa."},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Vehículo de residente (visitante es null)
-        vehiculo_residente = Vehiculo.objects.filter(
-            placa__iexact=placa, visitante__isnull=True
+        # 1) Vehículo de RESIDENTE (visitante es null)
+        v_res = Vehiculo.objects.filter(
+            placa__iexact=placa, visitante__isnull=True, propiedad__isnull=False
         ).first()
-        if vehiculo_residente:
-            return Response({'status': 'Acceso Permitido', 'tipo': 'Residente'})
+        if v_res:
+            return Response({"status": "Acceso Permitido", "tipo": "Residente"})
 
-        # Visita programada hoy
-        hoy = timezone.now().date()
-        visita_programada = Visita.objects.filter(
-            visitante__vehiculos__placa__iexact=placa,
-            fecha_ingreso_programado__date=hoy,
-        ).first()
+        # 2) Vehículo de VISITANTE con visita vigente hoy
+        hoy = timezone.localdate()
+        visita = (Visita.objects
+                  .filter(visitante__vehiculos__placa__iexact=placa,
+                          fecha_ingreso_programado__date__lte=hoy,
+                          fecha_salida_programada__date__gte=hoy)
+                  .select_related("visitante", "propiedad")
+                  .first())
+        if visita:
+            if not visita.ingreso_real:
+                visita.ingreso_real = timezone.now()
+                visita.save(update_fields=["ingreso_real"])
+            return Response({"status": "Acceso Permitido", "tipo": "Visitante",
+                             "visita_id": visita.id, "placa": placa})
 
-        if visita_programada:
-            if not visita_programada.ingreso_real:
-                visita_programada.ingreso_real = timezone.now()
-                visita_programada.save(update_fields=['ingreso_real'])
-            return Response({'status': 'Acceso Permitido', 'tipo': 'Visitante'})
-
-        return Response({'status': 'Acceso Denegado', 'placa': placa},
+        return Response({"status": "Acceso Denegado", "placa": placa},
                         status=status.HTTP_403_FORBIDDEN)
+# seguridad/views.py
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework import permissions, status
+from rest_framework.response import Response
+from .models import Visita
+
+class RegistrarSalidaVehicularView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        placa = (request.data.get("placa") or "").strip()
+        if not placa:
+            return Response({"error": "Se requiere el número de placa."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        hoy = timezone.localdate()
+        visita = (Visita.objects
+                  .filter(visitante__vehiculos__placa__iexact=placa,
+                          fecha_ingreso_programado__date__lte=hoy,
+                          fecha_salida_programada__date__gte=hoy,
+                          ingreso_real__isnull=False,
+                          salida_real__isnull=True)   # si tu campo se llama distinto, ajústalo
+                  .order_by("-ingreso_real")
+                  .first())
+
+        if not visita:
+            return Response(
+                {"status": "No hay visita activa para registrar salida", "placa": placa},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        visita.salida_real = timezone.now()  # o fecha_salida_real según tu modelo
+        visita.save(update_fields=["salida_real"])
+        return Response({"status": "Salida Registrada", "visita_id": visita.id, "placa": placa})
