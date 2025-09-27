@@ -7,6 +7,13 @@ from django.conf.urls.static import static
 from rest_framework.authtoken.views import obtain_auth_token
 from usuarios.views import RegistroView, RegistrarDispositivoView
 from rest_framework.authtoken.views import obtain_auth_token
+from django.urls import path, include
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -25,6 +32,9 @@ urlpatterns = [
 
     # URLs para la API navegable
     path('api-auth/', include('rest_framework.urls')),
+   path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
 
 if settings.DEBUG:

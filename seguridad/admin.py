@@ -1,48 +1,58 @@
+# seguridad/admin.py
 from django.contrib import admin
+from django.utils import timezone
 from .models import Visitante, Vehiculo, Visita
+
+
+# --- Acción: cerrar visitas vencidas (ingresó, no salió y ya venció la salida programada)
+@admin.action(description="Cerrar visitas vencidas (salida = salida programada)")
+def cerrar_visitas_vencidas(modeladmin, request, queryset):
+    now = timezone.now()
+    qs = queryset.filter(
+        ingreso_real__isnull=False,
+        salida_real__isnull=True,
+        fecha_salida_programada__lt=now,
+    )
+    total = qs.count()
+    for v in qs:
+        v.salida_real = v.fecha_salida_programada
+        v.save(update_fields=["salida_real"])
+    modeladmin.message_user(request, f"Se cerraron {total} visitas vencidas.")
 
 
 @admin.register(Visitante)
 class VisitanteAdmin(admin.ModelAdmin):
-    list_display = ("id", "nombre_completo", "documento", "telefono", "email")
+    list_display = ("nombre_completo", "documento", "telefono", "email")
     search_fields = ("nombre_completo", "documento", "telefono", "email")
-    # No uses 'documento_identidad' en ninguna parte.
+    list_per_page = 25
 
 
 @admin.register(Vehiculo)
 class VehiculoAdmin(admin.ModelAdmin):
-    list_display = ("placa", "visitante", "propiedad", "es_residente_bool")
+    list_display = ("placa", "propiedad", "visitante")
+    search_fields = ("placa", "propiedad__numero_casa", "visitante__nombre_completo")
     list_filter = ("propiedad",)
-    search_fields = (
-        "placa",
-        "visitante__nombre_completo",
-        "visitante__documento",
-        "propiedad__numero_casa",
-    )
-    # Evita E040 sin depender de search_fields de otros ModelAdmin:
-    raw_id_fields = ("visitante", "propiedad")
-
-    def es_residente_bool(self, obj):
-        return obj.es_residente
-    es_residente_bool.boolean = True
-    es_residente_bool.short_description = "¿Residente?"
+    list_per_page = 25
 
 
 @admin.register(Visita)
 class VisitaAdmin(admin.ModelAdmin):
     list_display = (
-        "visitante",
-        "propiedad",
-        "fecha_ingreso_programado",
-        "fecha_salida_programada",
-        "ingreso_real",
-        "salida_real",
+        "visitante", "propiedad",
+        "fecha_ingreso_programado", "fecha_salida_programada",
+        "ingreso_real", "salida_real", "estado",
     )
-    list_filter = ("propiedad",)
     search_fields = (
-        "visitante__nombre_completo",
-        "visitante__documento",
+        "visitante__nombre_completo", "visitante__documento",
         "propiedad__numero_casa",
     )
-    raw_id_fields = ("visitante", "propiedad")
-    # No referenciar 'registrado_por' porque ya no existe.
+    list_filter = ("propiedad",)
+    date_hierarchy = "fecha_ingreso_programado"
+    actions = [cerrar_visitas_vencidas]
+    list_per_page = 25
+
+    @admin.display(description="Estado")
+    def estado(self, obj: Visita):
+        if obj.ingreso_real and not obj.salida_real:
+            return "ABIERTA"
+        return "CERRADA"
