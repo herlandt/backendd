@@ -422,3 +422,31 @@ class WebhookConfirmacionPagoView(APIView):
             pass
         
         return Response(status=status.HTTP_200_OK)
+    
+from .models import Reserva
+
+class PagarReservaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, reserva_id, *args, **kwargs):
+        try:
+            reserva = Reserva.objects.get(id=reserva_id, usuario=request.user)
+            if reserva.pagada:
+                return Response({"detail": "Esta reserva ya fue pagada."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Creamos un objeto Pago para la reserva
+            pago = Pago.objects.create(
+                reserva=reserva,
+                usuario=request.user,
+                monto_pagado=reserva.costo_total,
+                estado_pago='PENDIENTE'
+            )
+
+            # Reutilizamos el servicio de QR que ya tienes
+            resultado = iniciar_pago_qr(pago.id)
+            if "error" in resultado:
+                return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
+            return Response(resultado, status=status.HTTP_200_OK)
+
+        except Reserva.DoesNotExist:
+            return Response({"detail": "Reserva no encontrada."}, status=status.HTTP_404_NOT_FOUND)

@@ -49,3 +49,30 @@ def iniciar_pago_qr(pago_id):
         return {"qr_image_base64": pago.qr_data}
     
     return {"error": "No se pudo generar el QR.", "details": qr_response.json()}
+
+from django.utils import timezone
+from datetime import timedelta
+
+def es_residente_moroso(usuario, meses_limite=None):
+    """
+    Verifica si un usuario asociado a una propiedad tiene deudas vencidas.
+    Si 'meses_limite' es un número, verifica deudas vencidas por más de esa cantidad de meses.
+    """
+    propiedades = Propiedad.objects.filter(propietario=usuario)
+    if not propiedades.exists():
+        return False # No es propietario, no tiene deudas de expensas
+
+    hoy = timezone.now().date()
+
+    # Construimos el query para gastos no pagados y vencidos
+    query = Gasto.objects.filter(
+        propiedad__in=propiedades,
+        pagado=False,
+        fecha_vencimiento__lt=hoy
+    )
+
+    if meses_limite:
+        fecha_limite = hoy - timedelta(days=30 * meses_limite)
+        query = query.filter(fecha_vencimiento__lt=fecha_limite)
+
+    return query.exists()

@@ -39,7 +39,9 @@ class Gasto(models.Model):
 
 class Pago(models.Model):
     # Pago de GASTO
-    gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, related_name='pagos')
+    gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
+    multa = models.ForeignKey(Multa, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
+    reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
     usuario = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name='pagos',
        # null=True, blank=True

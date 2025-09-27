@@ -23,3 +23,13 @@ class AvisoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Aviso
         fields = '__all__'
+
+from rest_framework import serializers
+from .models import Propiedad, AreaComun, Aviso, Regla # Añade Regla aquí
+
+# ... (tus otros serializers existentes)
+
+class ReglaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Regla
+        fields = ['codigo', 'titulo', 'descripcion', 'categoria']

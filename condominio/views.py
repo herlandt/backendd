@@ -15,3 +15,18 @@ class AreaComunViewSet(viewsets.ReadOnlyModelViewSet):
 class AvisoViewSet(viewsets.ModelViewSet):
     queryset = Aviso.objects.all()
     serializer_class = AvisoSerializer
+
+from rest_framework import viewsets, permissions
+from .models import Propiedad, AreaComun, Aviso, Regla # Añade Regla
+from .serializers import PropiedadSerializer, AreaComunSerializer, AvisoSerializer, ReglaSerializer # Añade ReglaSerializer
+
+# ... (tus otros ViewSets existentes)
+
+class ReglaViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Endpoint de API para visualizar las reglas del condominio.
+    Es de solo lectura. Las reglas se gestionan desde el panel de administrador.
+    """
+    queryset = Regla.objects.filter(activa=True)
+    serializer_class = ReglaSerializer
+    permission_classes = [permissions.IsAuthenticated] # Solo usuarios autenticados pueden ver las reglas

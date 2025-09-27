@@ -17,6 +17,7 @@ class ControlAccesoVehicularView(APIView):
     throttle_scope = "control_acceso"
 
     def post(self, request, *args, **kwargs):
+        
         serializer = ConsultaPlacaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -30,6 +31,11 @@ class ControlAccesoVehicularView(APIView):
             return Response({"detail": "Placa no encontrada."}, status=status.HTTP_403_FORBIDDEN)
 
         if vehiculo.es_residente:
+            # Si el vehículo pertenece a una propiedad, verificamos si el propietario es moroso
+            propietario = vehiculo.propiedad.propietario
+            if propietario and es_residente_moroso(propietario, meses_limite=3):
+                return Response({"detail": "Acceso denegado por deudas pendientes mayores a 3 meses."}, status=status.HTTP_403_FORBIDDEN)
+
             return Response({"detail": "Acceso permitido para residente.", "tipo": "residente"}, status=status.HTTP_200_OK)
 
         visita = Visita.objects.filter(

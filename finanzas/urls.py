@@ -33,4 +33,5 @@ urlpatterns = [
     path("reportes/resumen/", ReporteResumenView.as_view(), name="finanzas-reporte-resumen"),
  path('pagos/<int:pago_id>/iniciar-qr/', IniciarPagoView.as_view(), name='iniciar-pago-qr'),
     path('pagos/webhook-confirmacion/', WebhookConfirmacionPagoView.as_view(), name='webhook-pago'),
+   path('reservas/<int:reserva_id>/pagar/', PagarReservaView.as_view(), name='pagar-reserva'),
 ]
