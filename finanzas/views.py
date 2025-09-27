@@ -226,3 +226,153 @@ class ReservaViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+
+
+# --- imports estándar que ya usas arriba ---
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+# NUEVOS imports
+from rest_framework.permissions import AllowAny
+from django.http import HttpResponse
+import io
+import csv
+
+# Importamos modelos sólo si existen para no romper en entornos vacíos
+try:
+    from .models import Pago, PagoMulta
+except Exception:
+    Pago = None
+    PagoMulta = None
+
+
+# ------------ Comprobantes (PDF/TXT fallback) ------------
+
+class _ReciboBase:
+    """Helper para generar PDF si reportlab está instalado; si no, devolvemos TXT."""
+    @staticmethod
+    def build_pdf(title: str, lines: list[str]) -> bytes | None:
+        try:
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+
+            buf = io.BytesIO()
+            c = canvas.Canvas(buf, pagesize=letter)
+            w, h = letter
+            y = h - 72
+
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(72, y, title)
+            y -= 28
+
+            c.setFont("Helvetica", 12)
+            for line in lines:
+                c.drawString(72, y, str(line))
+                y -= 18
+
+            c.showPage()
+            c.save()
+            pdf = buf.getvalue()
+            buf.close()
+            return pdf
+        except Exception:
+            return None
+
+
+class ReciboPagoPDFView(APIView):
+    permission_classes = [AllowAny]  # Para probar fácil en navegador
+
+    def get(self, request, pago_id: int, *args, **kwargs):
+        title = f"Recibo de pago #{pago_id}"
+        lines = []
+
+        if Pago is not None:
+            try:
+                p = Pago.objects.get(pk=pago_id)
+                monto = getattr(p, "monto", None) or getattr(p, "monto_total", None) or getattr(p, "importe", None)
+                fecha = getattr(p, "fecha_pago", None) or getattr(p, "fecha", None)
+                lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
+            except Pago.DoesNotExist:
+                lines.append("Pago no encontrado (recibo de demostración).")
+
+        pdf = _ReciboBase.build_pdf(title, lines)
+        if pdf:
+            resp = HttpResponse(pdf, content_type="application/pdf")
+            resp["Content-Disposition"] = f'attachment; filename="recibo_pago_{pago_id}.pdf"'
+            return resp
+
+        # Fallback TXT si no hay reportlab
+        resp = HttpResponse(f"{title}\n" + "\n".join(lines), content_type="text/plain; charset=utf-8")
+        resp["Content-Disposition"] = f'attachment; filename="recibo_pago_{pago_id}.txt"'
+        return resp
+
+
+class ReciboPagoMultaPDFView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, pago_multa_id: int, *args, **kwargs):
+        title = f"Recibo de pago de multa #{pago_multa_id}"
+        lines = []
+
+        if PagoMulta is not None:
+            try:
+                pm = PagoMulta.objects.get(pk=pago_multa_id)
+                monto = getattr(pm, "monto", None) or getattr(pm, "monto_total", None) or getattr(pm, "importe", None)
+                fecha = getattr(pm, "fecha_pago", None) or getattr(pm, "fecha", None)
+                lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
+            except PagoMulta.DoesNotExist:
+                lines.append("Pago de multa no encontrado (recibo de demostración).")
+
+        pdf = _ReciboBase.build_pdf(title, lines)
+        if pdf:
+            resp = HttpResponse(pdf, content_type="application/pdf")
+            resp["Content-Disposition"] = f'attachment; filename="recibo_pago_multa_{pago_multa_id}.pdf"'
+            return resp
+
+        resp = HttpResponse(f"{title}\n" + "\n".join(lines), content_type="text/plain; charset=utf-8")
+        resp["Content-Disposition"] = f'attachment; filename="recibo_pago_multa_{pago_multa_id}.txt"'
+        return resp
+
+
+# ------------ Reportes (stub funcional para probar URLs) ------------
+
+class ReporteMorosidadView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Devuelve CSV o JSON vacío (plantilla) para probar la ruta.
+        Params: ?mes=9&anio=2025&fmt=csv
+        """
+        mes = request.query_params.get("mes")
+        anio = request.query_params.get("anio")
+        fmt = (request.query_params.get("fmt") or "json").lower()
+
+        # Aquí más adelante añadimos el cálculo real.
+        data = []
+
+        if fmt == "csv":
+            resp = HttpResponse(content_type="text/csv")
+            resp["Content-Disposition"] = 'attachment; filename="estado_morosidad.csv"'
+            w = csv.writer(resp)
+            w.writerow(["propiedad_id", "deuda"])
+            for row in data:
+                w.writerow(row)
+            return resp
+
+        return Response({"mes": mes, "anio": anio, "items": data})
+
+
+class ReporteResumenView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        """
+        Devuelve un resumen simple para probar la ruta.
+        Params: ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
+        """
+        desde = request.query_params.get("desde")
+        hasta = request.query_params.get("hasta")
+        # Plantilla: luego calculamos ingresos/egresos reales.
+        return Response({"desde": desde, "hasta": hasta, "ingresos": 0, "egresos": 0})

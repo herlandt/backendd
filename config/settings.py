@@ -33,8 +33,9 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    "notificaciones",
 ]
-
+NOTIF_FAKE_SEND = True
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -1,19 +1,34 @@
-from rest_framework.routers import DefaultRouter
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
 from .views import (
-    GastoViewSet, MultaViewSet,
-    PagoViewSet, PagoMultaViewSet,
+    GastoViewSet,
+    PagoViewSet,
+    MultaViewSet,
+    PagoMultaViewSet,
     ReservaViewSet,
+    ReciboPagoPDFView,
+    ReciboPagoMultaPDFView,
+    ReporteMorosidadView,
+    ReporteResumenView,
 )
 
 router = DefaultRouter()
-router.register(r'gastos', GastoViewSet, basename='gasto')
-router.register(r'multas', MultaViewSet, basename='multa')
-router.register(r'pagos', PagoViewSet, basename='pago')
-router.register(r'pagos_multas', PagoMultaViewSet, basename='pago-multa')
-router.register(r'reservas', ReservaViewSet, basename='reserva')
+router.register(r"gastos", GastoViewSet, basename="gasto")
+router.register(r"pagos", PagoViewSet, basename="pago")
+router.register(r"multas", MultaViewSet, basename="multa")
+router.register(r"pagos_multas", PagoMultaViewSet, basename="pago-multa")
+router.register(r"reservas", ReservaViewSet, basename="reserva")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # CRUD de DRF
+    path("", include(router.urls)),
+
+    # Comprobantes
+    path("pagos/<int:pago_id>/comprobante/", ReciboPagoPDFView.as_view(), name="finanzas-pago-comprobante"),
+    path("pagos-multas/<int:pago_multa_id>/comprobante/", ReciboPagoMultaPDFView.as_view(), name="finanzas-pago-multa-comprobante"),
+
+    # Reportes
+    path("reportes/estado-morosidad/", ReporteMorosidadView.as_view(), name="finanzas-reporte-morosidad"),
+    path("reportes/resumen/", ReporteResumenView.as_view(), name="finanzas-reporte-resumen"),
 ]
