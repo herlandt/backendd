@@ -36,7 +36,11 @@ class SolicitudMantenimiento(models.Model):
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
     solicitado_por = models.ForeignKey(
-        User, on_delete=models.PROTECT, related_name="solicitudes_mantenimiento"
+        User,
+        on_delete=models.SET_NULL,   # o PROTECT si así lo prefieres
+        null=True,                   #  <- importante
+        blank=True,                  #  <- importante
+        related_name='solicitudes_mantenimiento',
     )
     asignado_a = models.ForeignKey(
         PersonalMantenimiento,

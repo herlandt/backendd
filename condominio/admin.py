@@ -1,7 +1,13 @@
 from django.contrib import admin
 from .models import Propiedad, AreaComun
 from .models import Propiedad, AreaComun, Aviso 
-admin.site.register(Propiedad)
+from django.contrib import admin
+from .models import Propiedad, AreaComun, Aviso
+
+@admin.register(Propiedad)
+class PropiedadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'numero_casa', 'propietario', 'metros_cuadrados')
+    search_fields = ('numero_casa', 'propietario__username') 
 admin.site.register(Aviso)
 @admin.register(AreaComun)
 class AreaComunAdmin(admin.ModelAdmin):

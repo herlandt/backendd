@@ -19,7 +19,8 @@ urlpatterns = [
     path('api/usuarios/', include('usuarios.urls')),
     path('api/condominio/', include('condominio.urls')),
     path('api/finanzas/', include('finanzas.urls')),
-    path('api/seguridad/', include('seguridad.urls')),
+    path("api/seguridad/", include(("seguridad.urls", "seguridad"), namespace="seguridad")),
+
     path('api/mantenimiento/', include('mantenimiento.urls')), # <-- AHORA TIENE SU PREFIJO
 
     # URLs para la API navegable
