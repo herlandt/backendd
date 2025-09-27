@@ -7,11 +7,11 @@ def iniciar_pago_qr(pago_id):
     Se comunica con PagosNet para generar una transacción QR.
     """
     try:
-        pago = Pago.objects.select_related('gasto', 'usuario').get(id=pago_id)
+        pago = Pago.objects.get(id=pago_id)
     except Pago.DoesNotExist:
         return {"error": "El pago no existe."}
 
-    # 1. Autenticación (asume que tienes las credenciales en settings.py)
+    # 1. Autenticación con la pasarela
     auth_url = f"{settings.PAGOSNET_API_URL}authentication/login"
     auth_payload = {
         "email": settings.PAGOSNET_EMAIL,
@@ -27,22 +27,23 @@ def iniciar_pago_qr(pago_id):
     # 2. Creación de la transacción
     transaction_url = f"{settings.PAGOSNET_API_URL}transaction/qrpago"
     transaction_payload = {
-        # --- CORRECCIONES AQUÍ ---
-        "monto": float(pago.monto_pagado), # Usamos monto_pagado
-        "glosa": f"Pago: {pago.gasto.descripcion or 'Gasto General'}", # Usamos descripcion
-        "nombreCompleto": pago.usuario.get_full_name() or pago.usuario.username,
-        "carnetIdentidad": "0000000",
-        "celular": "77777777",
+        "monto": float(pago.monto),
+        "moneda": "BOB", # Bolivianos
+        "glosa": f"Pago de cuota {pago.gasto.nombre}",
+        "nombreCompleto": pago.usuario.get_full_name(),
+        "carnetIdentidad": "0000000", # O un dato real si lo tienes
+        "celular": "77777777", # O un dato real si lo tienes
         "email": pago.usuario.email,
         "empresa": "SmartCondominium",
         "tipoServicio": "Servicios Varios",
-        "idExterno": str(pago.id)
+        "idExterno": str(pago.id) # Muy importante para identificar el pago después
     }
 
     qr_response = requests.post(transaction_url, json=transaction_payload, headers=headers)
     
     if qr_response.status_code == 200:
         qr_data = qr_response.json().get('data')
+        # Guardamos la info del QR en nuestro modelo
         pago.qr_data = qr_data.get('qr')
         pago.id_transaccion_pasarela = qr_data.get('idTrn')
         pago.save()

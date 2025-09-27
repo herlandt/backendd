@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-
+from .views import IniciarPagoView, WebhookConfirmacionPagoView
 from .views import (
     GastoViewSet,
     PagoViewSet,
@@ -31,4 +31,6 @@ urlpatterns = [
     # Reportes
     path("reportes/estado-morosidad/", ReporteMorosidadView.as_view(), name="finanzas-reporte-morosidad"),
     path("reportes/resumen/", ReporteResumenView.as_view(), name="finanzas-reporte-resumen"),
+ path('pagos/<int:pago_id>/iniciar-qr/', IniciarPagoView.as_view(), name='iniciar-pago-qr'),
+    path('pagos/webhook-confirmacion/', WebhookConfirmacionPagoView.as_view(), name='webhook-pago'),
 ]

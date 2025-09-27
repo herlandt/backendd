@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'drf_spectacular_sidecar',
     "notificaciones",
 ]
+FCM_SERVER_KEY = 'xhdePFTJ5JCcWRkbXXaGoEq_6XUOTlFBWa7GomXTt_0'
 NOTIF_FAKE_SEND = True
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
@@ -102,7 +103,12 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
+# ... (otras configuraciones)
 
+# --- CONFIGURACIÓN DE PASARELA DE PAGOS ---
+PAGOSNET_API_URL = 'https://servicios.pagosnet.com/api/v2/' # URL de prueba
+PAGOSNET_EMAIL = 'tu_email_de_comercio@empresa.com'
+PAGOSNET_PASSWORD = 'tu_password_de_comercio'
 # --- Static ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'

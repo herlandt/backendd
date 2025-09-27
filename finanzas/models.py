@@ -42,12 +42,19 @@ class Pago(models.Model):
     gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, related_name='pagos')
     usuario = models.ForeignKey(
         User, on_delete=models.PROTECT, related_name='pagos',
-        null=True, blank=True
+       # null=True, blank=True
     )
     monto_pagado = models.DecimalField(max_digits=10, decimal_places=2)
     fecha_pago = models.DateField(auto_now_add=True)
     comprobante = models.FileField(upload_to='comprobantes/', null=True, blank=True)
-
+    ESTADO_CHOICES = [
+        ('PENDIENTE', 'Pendiente'),
+        ('PAGADO', 'Pagado'),
+        ('FALLIDO', 'Fallido'),
+    ]
+    estado_pago = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
+    id_transaccion_pasarela = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    qr_data = models.TextField(blank=True, null=True)
     def __str__(self):
         return f"Pago {self.monto_pagado} de {self.gasto}"
 

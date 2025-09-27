@@ -376,3 +376,49 @@ class ReporteResumenView(APIView):
         hasta = request.query_params.get("hasta")
         # Plantilla: luego calculamos ingresos/egresos reales.
         return Response({"desde": desde, "hasta": hasta, "ingresos": 0, "egresos": 0})
+
+
+# ... (importaciones existentes)
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .services import iniciar_pago_qr
+from .models import Pago
+
+class IniciarPagoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pago_id, *args, **kwargs):
+        """
+        Endpoint para que la app móvil solicite el QR de un pago pendiente.
+        """
+        resultado = iniciar_pago_qr(pago_id)
+        if "error" in resultado:
+            return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
+        return Response(resultado, status=status.HTTP_200_OK)
+
+class WebhookConfirmacionPagoView(APIView):
+    permission_classes = [AllowAny] # Debe ser público para que la pasarela pueda llamarlo
+
+    def post(self, request, *args, **kwargs):
+        """
+        Endpoint que PagosNet llamará cuando un pago se complete.
+        """
+        data = request.data
+        pago_id_externo = data.get('idExterno')
+        estado_transaccion = data.get('estado')
+
+        try:
+            pago = Pago.objects.get(id=int(pago_id_externo))
+            if estado_transaccion == 'PAGADO':
+                pago.estado_pago = 'PAGADO'
+                pago.save()
+                # Aquí podrías enviar una notificación push al usuario
+                print(f"Pago {pago.id} confirmado con éxito!")
+            else:
+                pago.estado_pago = 'FALLIDO'
+                pago.save()
+        except Pago.DoesNotExist:
+            # La pasarela envió un ID que no conocemos, lo ignoramos o lo registramos
+            pass
+        
+        return Response(status=status.HTTP_200_OK)
