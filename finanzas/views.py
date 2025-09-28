@@ -1,18 +1,26 @@
-from datetime import datetime
+from datetime import datetime, timedelta, date
 from decimal import Decimal
-from django.db import IntegrityError, transaction
-from django.utils import timezone
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
+import io
+import csv
 
+from django.db import IntegrityError, transaction
+from django.http import HttpResponse
+from django.utils import timezone
+
+from rest_framework import viewsets, status, permissions
+from rest_framework.decorators import action
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+ 
+from condominio.models import Propiedad
 from .models import Gasto, Pago, Multa, PagoMulta, Reserva
 from .serializers import (
-    GastoSerializer, PagoSerializer,
-    MultaSerializer, PagoMultaSerializer,
-    ReservaSerializer
+    GastoSerializer, PagoSerializer, MultaSerializer,
+    PagoMultaSerializer, ReservaSerializer
 )
-from condominio.models import Propiedad
+from .services import simular_pago_qr
 
 
 # =========================
@@ -21,15 +29,15 @@ from condominio.models import Propiedad
 class GastoViewSet(viewsets.ModelViewSet):
     queryset = Gasto.objects.select_related('propiedad').all()
     serializer_class = GastoSerializer
+    permission_classes = [IsAuthenticated]
 
-    @action(detail=False, methods=['post'], url_path='crear_mensual')
+    @action(detail=False, methods=['post'], url_path='crear_mensual', permission_classes=[IsAdminUser])
     def crear_mensual(self, request):
         descripcion = (request.data.get('descripcion') or '').strip()
         monto_raw = request.data.get('monto')
         fecha_str = request.data.get('fecha') or request.data.get('fecha_emision')
         venc_str = request.data.get('fecha_vencimiento')
 
-        # monto
         if not monto_raw:
             return Response({'detail': 'monto es obligatorio.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -39,7 +47,6 @@ class GastoViewSet(viewsets.ModelViewSet):
         except Exception:
             return Response({'detail': 'monto inválido.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # fecha emisión (para definir mes/anio)
         if fecha_str:
             try:
                 fecha = datetime.strptime(fecha_str, '%Y-%m-%d').date()
@@ -48,7 +55,6 @@ class GastoViewSet(viewsets.ModelViewSet):
         else:
             fecha = timezone.now().date()
 
-        # fecha vencimiento (opcional)
         fecha_vencimiento = None
         if venc_str:
             try:
@@ -56,12 +62,8 @@ class GastoViewSet(viewsets.ModelViewSet):
             except ValueError:
                 return Response({'detail': 'fecha_vencimiento inválida. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        mes = fecha.month
-        anio = fecha.year
-
-        creados = 0
-        duplicados = []
-        errores = []
+        mes, anio = fecha.month, fecha.year
+        creados, duplicados, errores = 0, [], []
 
         for prop in Propiedad.objects.all():
             try:
@@ -72,8 +74,7 @@ class GastoViewSet(viewsets.ModelViewSet):
                     fecha_vencimiento=fecha_vencimiento,
                     descripcion=descripcion,
                     pagado=False,
-                    mes=mes,
-                    anio=anio,
+                    mes=mes, anio=anio,
                 )
                 creados += 1
             except IntegrityError:
@@ -83,13 +84,10 @@ class GastoViewSet(viewsets.ModelViewSet):
 
         payload = {
             'status': f'Gastos creados: {creados}',
-            'mes': mes,
-            'anio': anio,
-            'duplicados': duplicados,
-            'errores': errores
+            'mes': mes, 'anio': anio,
+            'duplicados': duplicados, 'errores': errores
         }
-        http_status = status.HTTP_201_CREATED if creados else status.HTTP_200_OK
-        return Response(payload, status=http_status)
+        return Response(payload, status=status.HTTP_201_CREATED if creados else status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='registrar_pago')
     def registrar_pago(self, request, pk=None):
@@ -113,9 +111,6 @@ class GastoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='pagar_en_lote')
     def pagar_en_lote(self, request):
-        """
-        Body: {"ids":[1,2,3]}  -> paga todas las NO pagadas en la lista.
-        """
         ids = request.data.get('ids') or []
         if not isinstance(ids, list) or not ids:
             return Response({'detail': 'Proporcione una lista "ids".'}, status=status.HTTP_400_BAD_REQUEST)
@@ -147,6 +142,7 @@ class GastoViewSet(viewsets.ModelViewSet):
 class MultaViewSet(viewsets.ModelViewSet):
     queryset = Multa.objects.select_related('propiedad').all()
     serializer_class = MultaSerializer
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'], url_path='registrar_pago')
     def registrar_pago(self, request, pk=None):
@@ -170,9 +166,6 @@ class MultaViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='pagar_en_lote')
     def pagar_en_lote(self, request):
-        """
-        Body: {"ids":[1,2,3]}
-        """
         ids = request.data.get('ids') or []
         if not isinstance(ids, list) or not ids:
             return Response({'detail': 'Proporcione una lista "ids".'}, status=status.HTTP_400_BAD_REQUEST)
@@ -204,6 +197,7 @@ class MultaViewSet(viewsets.ModelViewSet):
 class PagoViewSet(viewsets.ModelViewSet):
     queryset = Pago.objects.select_related('gasto', 'usuario').all()
     serializer_class = PagoSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
@@ -212,6 +206,7 @@ class PagoViewSet(viewsets.ModelViewSet):
 class PagoMultaViewSet(viewsets.ModelViewSet):
     queryset = PagoMulta.objects.select_related('multa', 'usuario').all()
     serializer_class = PagoMultaSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
@@ -223,34 +218,14 @@ class PagoMultaViewSet(viewsets.ModelViewSet):
 class ReservaViewSet(viewsets.ModelViewSet):
     queryset = Reserva.objects.select_related('area_comun', 'usuario').all()
     serializer_class = ReservaSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
 
-# --- imports estándar que ya usas arriba ---
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
-# NUEVOS imports
-from rest_framework.permissions import AllowAny
-from django.http import HttpResponse
-import io
-import csv
-
-# Importamos modelos sólo si existen para no romper en entornos vacíos
-try:
-    from .models import Pago, PagoMulta
-except Exception:
-    Pago = None
-    PagoMulta = None
-
-
-# ------------ Comprobantes (PDF/TXT fallback) ------------
-
+# ------------ Comprobantes (PDF con fallback a TXT) ------------
 class _ReciboBase:
-    """Helper para generar PDF si reportlab está instalado; si no, devolvemos TXT."""
     @staticmethod
     def build_pdf(title: str, lines: list[str]) -> bytes | None:
         try:
@@ -261,16 +236,13 @@ class _ReciboBase:
             c = canvas.Canvas(buf, pagesize=letter)
             w, h = letter
             y = h - 72
-
             c.setFont("Helvetica-Bold", 16)
             c.drawString(72, y, title)
             y -= 28
-
             c.setFont("Helvetica", 12)
             for line in lines:
                 c.drawString(72, y, str(line))
                 y -= 18
-
             c.showPage()
             c.save()
             pdf = buf.getvalue()
@@ -281,20 +253,18 @@ class _ReciboBase:
 
 
 class ReciboPagoPDFView(APIView):
-    permission_classes = [AllowAny]  # Para probar fácil en navegador
+    permission_classes = [AllowAny]  # déjalo abierto para probar fácil
 
     def get(self, request, pago_id: int, *args, **kwargs):
         title = f"Recibo de pago #{pago_id}"
         lines = []
-
-        if Pago is not None:
-            try:
-                p = Pago.objects.get(pk=pago_id)
-                monto = getattr(p, "monto", None) or getattr(p, "monto_total", None) or getattr(p, "importe", None)
-                fecha = getattr(p, "fecha_pago", None) or getattr(p, "fecha", None)
-                lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
-            except Pago.DoesNotExist:
-                lines.append("Pago no encontrado (recibo de demostración).")
+        try:
+            p = Pago.objects.get(pk=pago_id)
+            monto = getattr(p, "monto_pagado", None) or getattr(p, "monto", None)
+            fecha = getattr(p, "fecha_pago", None) or getattr(p, "fecha", None)
+            lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
+        except Pago.DoesNotExist:
+            lines.append("Pago no encontrado (recibo de demostración).")
 
         pdf = _ReciboBase.build_pdf(title, lines)
         if pdf:
@@ -302,7 +272,6 @@ class ReciboPagoPDFView(APIView):
             resp["Content-Disposition"] = f'attachment; filename="recibo_pago_{pago_id}.pdf"'
             return resp
 
-        # Fallback TXT si no hay reportlab
         resp = HttpResponse(f"{title}\n" + "\n".join(lines), content_type="text/plain; charset=utf-8")
         resp["Content-Disposition"] = f'attachment; filename="recibo_pago_{pago_id}.txt"'
         return resp
@@ -314,15 +283,13 @@ class ReciboPagoMultaPDFView(APIView):
     def get(self, request, pago_multa_id: int, *args, **kwargs):
         title = f"Recibo de pago de multa #{pago_multa_id}"
         lines = []
-
-        if PagoMulta is not None:
-            try:
-                pm = PagoMulta.objects.get(pk=pago_multa_id)
-                monto = getattr(pm, "monto", None) or getattr(pm, "monto_total", None) or getattr(pm, "importe", None)
-                fecha = getattr(pm, "fecha_pago", None) or getattr(pm, "fecha", None)
-                lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
-            except PagoMulta.DoesNotExist:
-                lines.append("Pago de multa no encontrado (recibo de demostración).")
+        try:
+            pm = PagoMulta.objects.get(pk=pago_multa_id)
+            monto = getattr(pm, "monto_pagado", None) or getattr(pm, "monto", None)
+            fecha = getattr(pm, "fecha_pago", None) or getattr(pm, "fecha", None)
+            lines += [f"Monto: {monto}", f"Fecha: {fecha}"]
+        except PagoMulta.DoesNotExist:
+            lines.append("Pago de multa no encontrado (recibo de demostración).")
 
         pdf = _ReciboBase.build_pdf(title, lines)
         if pdf:
@@ -335,22 +302,16 @@ class ReciboPagoMultaPDFView(APIView):
         return resp
 
 
-# ------------ Reportes (stub funcional para probar URLs) ------------
-
+# ------------ Reportes (plantillas funcionales) ------------
 class ReporteMorosidadView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        """
-        Devuelve CSV o JSON vacío (plantilla) para probar la ruta.
-        Params: ?mes=9&anio=2025&fmt=csv
-        """
         mes = request.query_params.get("mes")
         anio = request.query_params.get("anio")
         fmt = (request.query_params.get("fmt") or "json").lower()
 
-        # Aquí más adelante añadimos el cálculo real.
-        data = []
+        data = []  # aquí luego metes la lógica real
 
         if fmt == "csv":
             resp = HttpResponse(content_type="text/csv")
@@ -368,41 +329,62 @@ class ReporteResumenView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        """
-        Devuelve un resumen simple para probar la ruta.
-        Params: ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD
-        """
         desde = request.query_params.get("desde")
         hasta = request.query_params.get("hasta")
-        # Plantilla: luego calculamos ingresos/egresos reales.
         return Response({"desde": desde, "hasta": hasta, "ingresos": 0, "egresos": 0})
 
 
-# ... (importaciones existentes)
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .services import iniciar_pago_qr
-from .models import Pago
-
+# ------------ Pagos con pasarela (demo) ------------
 class IniciarPagoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pago_id, *args, **kwargs):
-        """
-        Endpoint para que la app móvil solicite el QR de un pago pendiente.
-        """
         resultado = iniciar_pago_qr(pago_id)
         if "error" in resultado:
             return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
         return Response(resultado, status=status.HTTP_200_OK)
 
+
+class SimularPagoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pago_id, *args, **kwargs):
+        # 1) El pago debe ser del usuario autenticado
+        try:
+            pago = Pago.objects.select_related('gasto', 'reserva').get(id=pago_id, usuario=request.user)
+        except Pago.DoesNotExist:
+            return Response({"error": "Pago no encontrado o no te pertenece."}, status=status.HTTP_404_NOT_FOUND)
+
+        # 2) Si ya está pagado, no repetir
+        if getattr(pago, "estado_pago", "") == "PAGADO":
+            return Response({"mensaje": "Este pago ya fue realizado."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 3) Llamar a TU servicio simulado
+        data = simular_pago_qr(pago_id)
+        if "error" in data:
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        # 4) Refrescar y marcar deudas como pagadas
+        pago.refresh_from_db()
+        if getattr(pago, "gasto_id", None):
+            pago.gasto.pagado = True
+            pago.gasto.save(update_fields=["pagado"])
+        if getattr(pago, "reserva_id", None):
+            pago.reserva.pagada = True
+            pago.reserva.save(update_fields=["pagada"])
+
+        return Response({
+            "mensaje": data.get("mensaje", "Pago simulado y confirmado exitosamente."),
+            "pago_id": pago.id,
+            "estado": pago.estado_pago
+        }, status=status.HTTP_200_OK)
+
+
+
 class WebhookConfirmacionPagoView(APIView):
-    permission_classes = [AllowAny] # Debe ser público para que la pasarela pueda llamarlo
+    permission_classes = [AllowAny]  # debe ser público para la pasarela
 
     def post(self, request, *args, **kwargs):
-        """
-        Endpoint que PagosNet llamará cuando un pago se complete.
-        """
         data = request.data
         pago_id_externo = data.get('idExterno')
         estado_transaccion = data.get('estado')
@@ -411,19 +393,16 @@ class WebhookConfirmacionPagoView(APIView):
             pago = Pago.objects.get(id=int(pago_id_externo))
             if estado_transaccion == 'PAGADO':
                 pago.estado_pago = 'PAGADO'
-                pago.save()
-                # Aquí podrías enviar una notificación push al usuario
-                print(f"Pago {pago.id} confirmado con éxito!")
+                pago.save(update_fields=["estado_pago"])
+                # aquí podrías emitir notificación push
             else:
                 pago.estado_pago = 'FALLIDO'
-                pago.save()
-        except Pago.DoesNotExist:
-            # La pasarela envió un ID que no conocemos, lo ignoramos o lo registramos
+                pago.save(update_fields=["estado_pago"])
+        except (Pago.DoesNotExist, ValueError, TypeError):
             pass
-        
+
         return Response(status=status.HTTP_200_OK)
-    
-from .models import Reserva
+
 
 class PagarReservaView(APIView):
     permission_classes = [IsAuthenticated]
@@ -431,33 +410,118 @@ class PagarReservaView(APIView):
     def post(self, request, reserva_id, *args, **kwargs):
         try:
             reserva = Reserva.objects.get(id=reserva_id, usuario=request.user)
-            if reserva.pagada:
-                return Response({"detail": "Esta reserva ya fue pagada."}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Creamos un objeto Pago para la reserva
-            pago = Pago.objects.create(
-                reserva=reserva,
-                usuario=request.user,
-                monto_pagado=reserva.costo_total,
-                estado_pago='PENDIENTE'
-            )
-
-            # Reutilizamos el servicio de QR que ya tienes
-            resultado = iniciar_pago_qr(pago.id)
-            if "error" in resultado:
-                return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
-            return Response(resultado, status=status.HTTP_200_OK)
-
         except Reserva.DoesNotExist:
             return Response({"detail": "Reserva no encontrada."}, status=status.HTTP_404_NOT_FOUND)
-        
 
-# V AÑADE ESTA NUEVA CLASE AL FINAL V
-class PagarReservaView(APIView):
-    def post(self, request, reserva_id):
-        # Aquí irá tu lógica para procesar el pago de la reserva.
-        # Por ejemplo, encontrar la reserva, crear un objeto de Pago, etc.
-        return Response(
-            {"message": f"Lógica de pago para la reserva {reserva_id} aún no implementada."}, 
-            status=status.HTTP_200_OK
+        if getattr(reserva, "pagada", False):
+            return Response({"detail": "Esta reserva ya fue pagada."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Crear un Pago pendiente para esa reserva
+        pago = Pago.objects.create(
+            reserva=reserva,
+            usuario=request.user,
+            monto_pagado=reserva.costo_total,
+            estado_pago='PENDIENTE'
         )
+
+        # Simular pago ahora mismo
+        data = simular_pago_qr(pago.id)
+        if "error" in data:
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
+
+        # Asegurar que quede marcada la reserva como pagada
+        reserva.pagada = True
+        reserva.save(update_fields=["pagada"])
+
+        return Response({
+            "mensaje": data.get("mensaje", "Pago de reserva simulado con éxito."),
+            "pago_id": pago.id
+        }, status=status.HTTP_200_OK)
+
+# ------------ Utilidades admin / estado de cuenta ------------
+class GenerarExpensasView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def post(self, request):
+        monto = request.data.get('monto')
+        descripcion = request.data.get('descripcion')
+        fecha_vencimiento = request.data.get('fecha_vencimiento')
+        if not all([monto, descripcion, fecha_vencimiento]):
+            return Response({"error": "Monto, descripción y fecha_vencimiento son requeridos."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        creados = 0
+        for propiedad in Propiedad.objects.all():
+            Gasto.objects.create(
+                propiedad=propiedad,
+                monto=monto,
+                fecha_emision=date.today(),
+                fecha_vencimiento=fecha_vencimiento,
+                descripcion=descripcion,
+                pagado=False
+            )
+            creados += 1
+
+        return Response({"mensaje": f"{creados} gastos de expensas generados."}, status=status.HTTP_201_CREATED)
+
+# En finanzas/views.py
+
+# ... (tus otras importaciones y vistas se quedan igual)
+# finanzas/views.py# finanzas/views.py
+from django.db.models import Q
+from rest_framework import permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
+from .models import Gasto, Multa, Reserva
+from .serializers import GastoSerializer, MultaSerializer, ReservaSerializer
+
+class EstadoDeCuentaView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        usuario = request.user
+
+        # Gastos pendientes del propietario o de residentes vinculados
+        gastos_pendientes = (
+            Gasto.objects
+            .filter(
+                Q(propiedad__propietario=usuario) |
+                Q(propiedad__residentes__usuario=usuario),
+                pagado=False
+            )
+            .distinct()
+        )
+
+        # (Opcional pero recomendado) incluir MULTAS pendientes
+        multas_pendientes = (
+            Multa.objects
+            .filter(
+                Q(propiedad__propietario=usuario) |
+                Q(propiedad__residentes__usuario=usuario),
+                pagado=False
+            )
+            .distinct()
+        )
+
+        # Reservas pendientes tal como ya lo tenías
+        reservas_pendientes = (
+            Reserva.objects
+            .filter(usuario=usuario, pagada=False)
+            .distinct()
+        )
+
+        gastos_data = GastoSerializer(gastos_pendientes, many=True).data
+        for item in gastos_data:
+            item['tipo_deuda'] = 'gasto'
+
+        multas_data = MultaSerializer(multas_pendientes, many=True).data
+        for item in multas_data:
+            item['tipo_deuda'] = 'multa'
+
+        reservas_data = ReservaSerializer(reservas_pendientes, many=True).data
+        for item in reservas_data:
+            item['tipo_deuda'] = 'reserva'
+
+        deudas_combinadas = gastos_data + multas_data + reservas_data
+        return Response(deudas_combinadas)

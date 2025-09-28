@@ -74,3 +74,26 @@ def es_residente_moroso(usuario, meses_limite=None):
         query = query.filter(fecha_vencimiento__lt=fecha_limite)
 
     return query.exists()
+
+# En finanzas/services.py
+
+def simular_pago_qr(pago_id):
+    """
+    Simula la generación y confirmación de un pago QR.
+    """
+    try:
+        pago = Pago.objects.get(id=pago_id)
+    except Pago.DoesNotExist:
+        return {"error": "El pago no existe."}
+
+    # Simula una transacción exitosa
+    pago.id_transaccion_pasarela = f"sim_{uuid.uuid4()}" # Genera un ID de transacción falso
+    pago.estado_pago = 'PAGADO'
+    pago.fecha_pago = timezone.now()
+    pago.save()
+
+    # Lógica para notificar al usuario
+    # from notificaciones.services import enviar_notificacion_a_usuario
+    # enviar_notificacion_a_usuario(pago.usuario, "Pago Recibido", f"Tu pago de ${pago.monto_pagado} ha sido procesado.")
+    
+    return {"mensaje": "Pago simulado y confirmado exitosamente."}

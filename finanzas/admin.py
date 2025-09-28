@@ -14,14 +14,32 @@ class PagoAdmin(admin.ModelAdmin):
     list_display = ('id', 'gasto', 'usuario', 'monto_pagado', 'fecha_pago')
     list_filter = ('fecha_pago',)
     search_fields = ('gasto__propiedad__numero_casa', 'usuario__username')
+    
+
 
 
 @admin.register(Multa)
 class MultaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'propiedad', 'concepto', 'monto', 'mes', 'anio', 'pagado')
-    list_filter = ('anio', 'mes', 'pagado')
+    list_display = ('id', 'propiedad', 'concepto', 'monto', 'pagado')
+    list_filter = ('pagado', 'anio', 'mes')
     search_fields = ('propiedad__numero_casa', 'concepto', 'descripcion')
 
+    def save_model(self, request, obj, form, change):
+        """
+        Si se marca la multa como 'pagada' en el admin, se crea automáticamente
+        el registro de PagoMulta asociado a ella.
+        """
+        super().save_model(request, obj, form, change) # Guarda la multa primero
+
+        # Si la multa está marcada como pagada Y todavía no tiene un pago asociado...
+        if obj.pagado and not PagoMulta.objects.filter(multa=obj).exists():
+            # ...creamos el pago.
+            PagoMulta.objects.create(
+                multa=obj,
+                usuario=request.user, # Asigna el admin que está haciendo la operación
+                monto_pagado=obj.monto,
+                fecha_pago=timezone.now()
+            )
 
 @admin.register(PagoMulta)
 class PagoMultaAdmin(admin.ModelAdmin):
