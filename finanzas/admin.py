@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Gasto, Pago, Multa, PagoMulta, Reserva
-
+from .models import Gasto, Pago, Multa, Reserva, Egreso, Ingreso
 
 @admin.register(Gasto)
 class GastoAdmin(admin.ModelAdmin):
@@ -53,3 +53,18 @@ class ReservaAdmin(admin.ModelAdmin):
     list_display = ('id', 'area_comun', 'usuario', 'fecha_reserva', 'hora_inicio', 'hora_fin', 'costo_total', 'pagada')
     list_filter = ('fecha_reserva', 'pagada')
     search_fields = ('area_comun__nombre', 'usuario__username')
+
+
+
+@admin.register(Egreso)
+class EgresoAdmin(admin.ModelAdmin):
+    list_display = ('fecha', 'concepto', 'monto', 'categoria')
+    list_filter = ('categoria', 'fecha')
+    search_fields = ('concepto', 'descripcion')
+
+@admin.register(Ingreso)
+class IngresoAdmin(admin.ModelAdmin):
+    list_display = ('fecha', 'concepto', 'monto', 'pago_relacionado')
+    list_filter = ('fecha',)
+    search_fields = ('concepto', 'descripcion')
+

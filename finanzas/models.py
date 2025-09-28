@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from condominio.models import Propiedad, AreaComun
-
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 User = get_user_model()
 
 # ===================================================================
@@ -117,3 +118,94 @@ class PagoMulta(models.Model):
 
     def __str__(self):
         return f"PagoMulta {self.monto_pagado} de {self.multa}"
+    
+
+
+class Egreso(models.Model):
+    """
+    Representa las salidas de dinero del condominio.
+    """
+    CATEGORIA_CHOICES = [
+        ('MANTENIMIENTO', 'Mantenimiento y Reparaciones'),
+        ('SERVICIOS', 'Servicios Públicos (Agua, Luz)'),
+        ('SUELDOS', 'Sueldos y Salarios'),
+        ('ADMIN', 'Gastos Administrativos'),
+        ('LIMPIEZA', 'Limpieza y Jardinería'),
+        ('SEGURIDAD', 'Seguridad'),
+        ('OTROS', 'Otros'),
+    ]
+
+    fecha = models.DateField(auto_now_add=True)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    concepto = models.CharField(max_length=255)
+    descripcion = models.TextField(blank=True, null=True)
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES)
+    comprobante = models.FileField(upload_to='comprobantes_egresos/', blank=True, null=True)
+    solicitud_mantenimiento = models.ForeignKey(
+        'mantenimiento.SolicitudMantenimiento',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='egresos'
+    )
+
+    class Meta:
+        verbose_name = "Egreso"
+        verbose_name_plural = "Egresos"
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"Egreso: {self.concepto} - ${self.monto}"
+
+
+class Ingreso(models.Model):
+    """
+    Representa las entradas de dinero al condominio,
+    especialmente las que se registran manualmente.
+    """
+    fecha = models.DateField(auto_now_add=True)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    concepto = models.CharField(max_length=255)
+    descripcion = models.TextField(blank=True, null=True)
+    pago_relacionado = models.OneToOneField(
+        Pago,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='ingreso_manual'
+    )
+
+    class Meta:
+        verbose_name = "Ingreso"
+        verbose_name_plural = "Ingresos"
+        ordering = ['-fecha']
+
+    def __str__(self):
+        return f"Ingreso: {self.concepto} - ${self.monto}"
+
+
+# ========= SIGNALS PARA INGRESOS AUTOMÁTICOS =========
+
+@receiver(post_save, sender=Pago)
+def crear_ingreso_desde_pago(sender, instance, created, **kwargs):
+    """
+    Crea un registro de Ingreso automáticamente cuando un Pago se marca como completado.
+    """
+    if instance.estado_pago == 'completado' and not hasattr(instance, 'ingreso_manual'):
+        concepto = "Ingreso no especificado"
+        if instance.gasto:
+            concepto = f"Pago de expensa: {instance.gasto.descripcion}"
+        elif instance.multa:
+            concepto = f"Pago de multa: {instance.multa.motivo}"
+        elif instance.reserva:
+            concepto = f"Pago de reserva: {instance.reserva.area_comun.nombre}"
+
+        Ingreso.objects.get_or_create(
+            pago_relacionado=instance,
+            defaults={
+                'fecha': instance.fecha_pago.date(),
+                'monto': instance.monto,
+                'concepto': concepto,
+                'descripcion': f"Ingreso automático generado desde el pago ID {instance.id}"
+            }
+        )

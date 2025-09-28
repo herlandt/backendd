@@ -2,7 +2,11 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal
 import io
 import csv
+# finanzas/views.py
 
+# ... (otras importaciones) ...
+from django.db.models import Sum, Count, F, ExpressionWrapper, fields # <--- AÑADE O COMPLETA ESTA LÍNEA
+# ... (el resto de las importaciones) ...
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.utils import timezone
@@ -13,14 +17,15 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
- 
+from .reportes import generar_reporte_financiero_pdf
 from condominio.models import Propiedad
-from .models import Gasto, Pago, Multa, PagoMulta, Reserva
+from .models import Gasto, Pago, Multa, PagoMulta, Reserva, Egreso, Ingreso
 from .serializers import (
     GastoSerializer, PagoSerializer, MultaSerializer,
-    PagoMultaSerializer, ReservaSerializer
+    PagoMultaSerializer, ReservaSerializer,EgresoSerializer, IngresoSerializer
 )
 from .services import simular_pago_qr
+
 
 
 # =========================
@@ -525,3 +530,162 @@ class EstadoDeCuentaView(APIView):
 
         deudas_combinadas = gastos_data + multas_data + reservas_data
         return Response(deudas_combinadas)
+
+
+class EgresoViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para la gestión de egresos del condominio.
+    Solo accesible por administradores.
+    """
+    queryset = Egreso.objects.all()
+    serializer_class = EgresoSerializer
+    permission_classes = [permissions.IsAdminUser] # Solo admins pueden gestionar egresos
+
+class IngresoViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para la gestión de ingresos del condominio.
+    Permite ver todos los ingresos y agregar ingresos manuales.
+    """
+    queryset = Ingreso.objects.all()
+    serializer_class = IngresoSerializer
+    permission_classes = [permissions.IsAdminUser] # Solo admins pueden gestionar ingresos
+
+
+
+
+# ========= NUEVA VISTA PARA REPORTE FINANCIERO =========
+
+class ReporteFinancieroView(APIView):
+    """
+    Genera un reporte financiero con un resumen de ingresos y egresos
+    dentro de un rango de fechas.
+    Soporta dos formatos: JSON (defecto) y PDF (con ?formato=pdf).
+    """
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_financial_data(self, request):
+        # Esta función extrae la lógica de cálculo para poder reutilizarla
+        try:
+            fecha_fin_str = request.query_params.get('fecha_fin', date.today().isoformat())
+            fecha_fin = date.fromisoformat(fecha_fin_str)
+            fecha_inicio_str = request.query_params.get('fecha_inicio', (fecha_fin - timedelta(days=30)).isoformat())
+            fecha_inicio = date.fromisoformat(fecha_inicio_str)
+            if fecha_inicio > fecha_fin:
+                return None, Response({"error": "La fecha de inicio no puede ser posterior a la fecha de fin."}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return None, Response({"error": "Formato de fecha inválido. Use AAAA-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ingresos_qs = Ingreso.objects.filter(fecha__range=[fecha_inicio, fecha_fin])
+        total_ingresos = ingresos_qs.aggregate(total=Sum('monto'))['total'] or 0
+        ingresos_por_concepto = list(ingresos_qs.values('concepto').annotate(subtotal=Sum('monto')).order_by('-subtotal'))
+
+        egresos_qs = Egreso.objects.filter(fecha__range=[fecha_inicio, fecha_fin])
+        total_egresos = egresos_qs.aggregate(total=Sum('monto'))['total'] or 0
+        egresos_por_categoria = list(egresos_qs.values('categoria').annotate(subtotal=Sum('monto')).order_by('-subtotal'))
+
+        balance = total_ingresos - total_egresos
+
+        data = {
+            'rango_fechas': {'inicio': fecha_inicio.isoformat(), 'fin': fecha_fin.isoformat()},
+            'resumen': {'total_ingresos': total_ingresos, 'total_egresos': total_egresos, 'balance': balance},
+            'detalle_ingresos': ingresos_por_concepto,
+            'detalle_egresos': egresos_por_categoria,
+        }
+        return data, None
+
+    def get(self, request, *args, **kwargs):
+        formato = request.query_params.get('formato', 'json').lower()
+        
+        data, error_response = self.get_financial_data(request)
+        if error_response:
+            return error_response
+
+        if formato == 'pdf':
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="reporte_financiero_{data["rango_fechas"]["inicio"]}_a_{data["rango_fechas"]["fin"]}.pdf"'
+            
+            # Llamamos a la función que genera el PDF
+            return generar_reporte_financiero_pdf(response, data)
+        
+        # Por defecto, devolvemos JSON
+        return Response(data, status=status.HTTP_200_OK)
+    
+
+
+class ReporteUsoAreasComunesView(APIView):
+    """
+    Genera un reporte con estadísticas de uso de las áreas comunes
+    dentro de un rango de fechas.
+    """
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, *args, **kwargs):
+        # 1. Obtener el rango de fechas de los query params
+        try:
+            fecha_fin_str = request.query_params.get('fecha_fin', date.today().isoformat())
+            fecha_fin = date.fromisoformat(fecha_fin_str)
+
+            fecha_inicio_str = request.query_params.get('fecha_inicio', (fecha_fin - timedelta(days=30)).isoformat())
+            fecha_inicio = date.fromisoformat(fecha_inicio_str)
+
+            if fecha_inicio > fecha_fin:
+                return Response(
+                    {"error": "La fecha de inicio no puede ser posterior a la fecha de fin."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Formato de fecha inválido. Use AAAA-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 2. Realizar la consulta y agregación de datos
+        # Filtramos las reservas pagadas dentro del rango de fechas
+        reservas_en_rango = Reserva.objects.filter(
+            fecha_reserva__range=[fecha_inicio, fecha_fin],
+            pagada=True
+        )
+
+        # Calculamos la duración de cada reserva en horas
+        duracion_horas = ExpressionWrapper(
+            (F('hora_fin') - F('hora_inicio')),
+            output_field=fields.DurationField()
+        )
+
+        # Agrupamos por área común y calculamos las estadísticas
+        estadisticas = (
+            reservas_en_rango
+            .annotate(nombre_area=F('area_comun__nombre'))
+            .values('nombre_area')
+            .annotate(
+                cantidad_reservas=Count('id'),
+                total_horas_reservadas=Sum(duracion_horas),
+                ingresos_generados=Sum('costo_total')
+            )
+            .order_by('-cantidad_reservas')
+        )
+
+        # 3. Formatear la respuesta para que sea más legible
+        reporte_data = []
+        for item in estadisticas:
+            # La duración viene como un objeto timedelta, lo convertimos a horas
+            total_segundos = item['total_horas_reservadas'].total_seconds() if item['total_horas_reservadas'] else 0
+            horas = round(total_segundos / 3600, 2)
+
+            reporte_data.append({
+                "area_comun": item['nombre_area'],
+                "cantidad_reservas": item['cantidad_reservas'],
+                "total_horas_reservadas": horas,
+                "ingresos_generados": item['ingresos_generados'] or 0
+            })
+
+        # 4. Construir la respuesta final
+        data = {
+            'rango_fechas': {
+                'inicio': fecha_inicio.isoformat(),
+                'fin': fecha_fin.isoformat(),
+            },
+            'reporte': reporte_data
+        }
+
+        return Response(data, status=status.HTTP_200_OK)

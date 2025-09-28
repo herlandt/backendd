@@ -20,7 +20,11 @@ from rest_framework import status
 from finanzas.models import Gasto, Pago, PagoMulta  # Multa/Reserva no son necesarias aquí
 from condominio.models import Propiedad
 
-
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from reportlab.lib.units import inch
 # ---------------------------
 # Utilidades “a prueba de esquema”
 # ---------------------------
@@ -223,70 +227,78 @@ class ReporteMorosidadView(APIView):
 # 2b) Resumen financiero (JSON o CSV)
 # ---------------------------
 
-class ReporteResumenView(APIView):
+def generar_reporte_financiero_pdf(response, data):
     """
-    GET ?desde=YYYY-MM-DD&hasta=YYYY-MM-DD&fmt=csv|json
-    Suma ingresos de Pagos y Pagos de Multa en el rango (si hay campo fecha),
-    y expone conteos básicos de gastos emitidos.
+    Toma los datos del reporte financiero y genera un documento PDF.
     """
-    permission_classes = [IsAdminUser]
+    # Configuración del documento
+    doc = SimpleDocTemplate(response, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+    styles = getSampleStyleSheet()
+    story = []
 
-    def get(self, request):
-        fmt = (request.GET.get("fmt") or "json").lower()
+    # Título
+    titulo = Paragraph("Reporte Financiero del Condominio", styles['h1'])
+    story.append(titulo)
+    story.append(Spacer(1, 0.2 * inch))
 
-        # Rango por defecto: últimos 30 días
-        try:
-            desde = datetime.fromisoformat(request.GET.get("desde")) if request.GET.get("desde") else timezone.now() - timedelta(days=30)
-            hasta = datetime.fromisoformat(request.GET.get("hasta")) if request.GET.get("hasta") else timezone.now()
-        except ValueError:
-            return Response({"detail": "Formato de fecha inválido (usa YYYY-MM-DD)."}, status=status.HTTP_400_BAD_REQUEST)
+    # Rango de Fechas
+    rango_fechas = f"Periodo del {data['rango_fechas']['inicio']} al {data['rango_fechas']['fin']}"
+    story.append(Paragraph(rango_fechas, styles['h3']))
+    story.append(Spacer(1, 0.3 * inch))
 
-        # Campos de fecha tolerantes
-        pago_date_field = first_existing_field(Pago, ["fecha", "fecha_pago", "created_at", "creado_en"])
-        pago_multa_date_field = first_existing_field(PagoMulta, ["fecha", "fecha_pago", "created_at", "creado_en"])
+    # Resumen General
+    resumen_data = [
+        ['Total Ingresos:', f"${data['resumen']['total_ingresos']:.2f}"],
+        ['Total Egresos:', f"${data['resumen']['total_egresos']:.2f}"],
+        ['Balance:', f"${data['resumen']['balance']:.2f}"],
+    ]
+    resumen_table = Table(resumen_data, colWidths=[120, 100])
+    resumen_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+    ]))
+    story.append(resumen_table)
+    story.append(Spacer(1, 0.5 * inch))
 
-        # Ingresos por cuotas
-        monto_field_pago = "monto_pagado" if model_has_field(Pago, "monto_pagado") else first_existing_field(Pago, ["monto", "importe"])
-        pagos_qs = Pago.objects.all()
-        if pago_date_field:
-            pagos_qs = safe_filter(pagos_qs, **{f"{pago_date_field}__date__gte": desde.date()})
-            pagos_qs = safe_filter(pagos_qs, **{f"{pago_date_field}__date__lte": hasta.date()})
+    # Detalle de Ingresos
+    if data['detalle_ingresos']:
+        story.append(Paragraph("Detalle de Ingresos", styles['h2']))
+        story.append(Spacer(1, 0.2 * inch))
+        ingresos_data = [['Concepto', 'Subtotal']] + [[item['concepto'], f"${item['subtotal']:.2f}"] for item in data['detalle_ingresos']]
+        
+        ingresos_table = Table(ingresos_data, colWidths=[300, 100])
+        ingresos_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4F8B7D')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(ingresos_table)
+        story.append(Spacer(1, 0.5 * inch))
 
-        total_pagos = pagos_qs.aggregate(total=Sum(monto_field_pago or "id")).get("total") or Decimal("0")
+    # Detalle de Egresos
+    if data['detalle_egresos']:
+        story.append(Paragraph("Detalle de Egresos", styles['h2']))
+        story.append(Spacer(1, 0.2 * inch))
+        egresos_data = [['Categoría', 'Subtotal']] + [[item['categoria'], f"${item['subtotal']:.2f}"] for item in data['detalle_egresos']]
 
-        # Ingresos por multas
-        monto_field_pm = "monto_pagado" if model_has_field(PagoMulta, "monto_pagado") else first_existing_field(PagoMulta, ["monto", "importe"])
-        pagos_multas_qs = PagoMulta.objects.all()
-        if pago_multa_date_field:
-            pagos_multas_qs = safe_filter(pagos_multas_qs, **{f"{pago_multa_date_field}__date__gte": desde.date()})
-            pagos_multas_qs = safe_filter(pagos_multas_qs, **{f"{pago_multa_date_field}__date__lte": hasta.date()})
+        egresos_table = Table(egresos_data, colWidths=[300, 100])
+        egresos_table.setStyle(TableStyle([
+           ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#D9534F')),
+           ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+           ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+           ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+           ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+           ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+           ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        story.append(egresos_table)
 
-        total_pagos_multas = pagos_multas_qs.aggregate(total=Sum(monto_field_pm or "id")).get("total") or Decimal("0")
+    # Construir el PDF
+    doc.build(story)
+    return response
 
-        # Gastos emitidos en rango (si tu Gasto tiene campos de fecha; sino, se devuelve el total global)
-        gasto_date_field = first_existing_field(Gasto, ["fecha_emision", "fecha", "created_at", "creado_en"])
-        gastos_qs = Gasto.objects.all()
-        if gasto_date_field:
-            gastos_qs = safe_filter(gastos_qs, **{f"{gasto_date_field}__date__gte": desde.date()})
-            gastos_qs = safe_filter(gastos_qs, **{f"{gasto_date_field}__date__lte": hasta.date()})
-
-        total_gastos_emitidos = gastos_qs.aggregate(total=Sum("monto")).get("total") or Decimal("0")
-
-        data = {
-            "desde": desde.date().isoformat(),
-            "hasta": hasta.date().isoformat(),
-            "ingresos_cuotas": str(total_pagos),
-            "ingresos_multas": str(total_pagos_multas),
-            "ingresos_totales": str((total_pagos or 0) + (total_pagos_multas or 0)),
-            "gastos_emitidos": str(total_gastos_emitidos),
-        }
-
-        if fmt == "csv":
-            resp = HttpResponse(content_type="text/csv")
-            resp["Content-Disposition"] = 'attachment; filename="reporte_resumen.csv"'
-            w = csv.writer(resp)
-            w.writerow(list(data.keys()))
-            w.writerow(list(data.values()))
-            return resp
-
-        return JsonResponse(data)

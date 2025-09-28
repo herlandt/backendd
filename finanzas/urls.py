@@ -12,6 +12,7 @@ from .views import (
     IniciarPagoView, SimularPagoView, WebhookConfirmacionPagoView, PagarReservaView,
     # utilidades finanzas
     GenerarExpensasView, EstadoDeCuentaView,
+    EgresoViewSet, IngresoViewSet, ReporteFinancieroView,ReporteUsoAreasComunesView 
 )
 
 router = DefaultRouter()
@@ -20,6 +21,9 @@ router.register(r"pagos", PagoViewSet, basename="pago")
 router.register(r"multas", MultaViewSet, basename="multa")
 router.register(r"pagos-multas", PagoMultaViewSet, basename="pago-multa")
 router.register(r"reservas", ReservaViewSet, basename="reserva")
+router.register(r'egresos', EgresoViewSet, basename='egresos')
+router.register(r'ingresos', IngresoViewSet, basename='ingresos')
+
 
 urlpatterns = [
     # CRUDs
@@ -44,4 +48,6 @@ urlpatterns = [
     # Utilidades admin/usuario
     path("expensas/generar/", GenerarExpensasView.as_view(), name="generar-expensas"),
     path("estado-de-cuenta/", EstadoDeCuentaView.as_view(), name="estado-de-cuenta"),
+ path('reportes/financiero/', ReporteFinancieroView.as_view(), name='reporte-financiero'),
+path('reportes/uso-areas-comunes/', ReporteUsoAreasComunesView.as_view(), name='reporte-uso-areas-comunes'),
 ]

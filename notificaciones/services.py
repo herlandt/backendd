@@ -40,3 +40,58 @@ def send_push(tokens, title, body, data=None):
     except Exception as e:
         log.exception("Error enviando push: %s", e)
         return {"sent": 0, "mode": "error", "error": str(e)}
+
+
+# notificaciones/services.py
+
+import requests
+from django.conf import settings
+from .models import Dispositivo
+
+def notificar_usuario(usuario, titulo, cuerpo):
+    """
+    Busca todos los dispositivos de un usuario y les envía una notificación push.
+    """
+    # Buscamos todos los tokens de los dispositivos registrados para ese usuario
+    dispositivos = Dispositivo.objects.filter(usuario=usuario, activo=True)
+    tokens = [d.token_dispositivo for d in dispositivos]
+
+    if not tokens:
+        print(f"INFO: El usuario {usuario.username} no tiene dispositivos activos para notificar.")
+        return
+
+    # Si estamos en modo de prueba (NOTIF_FAKE_SEND=True en settings.py),
+    # solo imprimimos en la consola en lugar de enviar una notificación real.
+    if getattr(settings, 'NOTIF_FAKE_SEND', False):
+        print("--- SIMULACIÓN DE NOTIFICACIÓN PUSH ---")
+        print(f"Para: {usuario.username}")
+        print(f"Tokens: {tokens}")
+        print(f"Título: {titulo}")
+        print(f"Cuerpo: {cuerpo}")
+        print("---------------------------------------")
+        return
+
+    # --- Lógica para enviar la notificación real con Firebase (FCM) ---
+    headers = {
+        'Authorization': f'key={settings.FCM_SERVER_KEY}',
+        'Content-Type': 'application/json',
+    }
+    
+    payload = {
+        'registration_ids': tokens,  # Se pueden enviar a múltiples dispositivos a la vez
+        'notification': {
+            'title': titulo,
+            'body': cuerpo,
+        },
+        'data': {
+            # Aquí puedes añadir datos adicionales si tu app móvil los necesita
+            'extra_info': 'Puedes agregar JSON aquí'
+        }
+    }
+
+    try:
+        response = requests.post('https://fcm.googleapis.com/fcm/send', headers=headers, json=payload)
+        response.raise_for_status()  # Lanza un error si la petición falla (ej. 401, 500)
+        print(f"Notificación enviada exitosamente a los dispositivos de {usuario.username}.")
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: Falló el envío de notificación a FCM: {e}")

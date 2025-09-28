@@ -4,6 +4,7 @@ from .models import Pago
 from rest_framework import serializers
 from .models import Gasto, Pago, Multa
 # En finanzas/serializers.py
+from .models import Gasto, Pago, Multa, Reserva, Egreso, Ingreso # Importar nuevos modelos
 
 from condominio.models import Reserva # <-- AÑADE ESTA LÍNEA
 def iniciar_pago_qr(pago_id):
@@ -83,3 +84,19 @@ class ReservaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reserva
         fields = '__all__'
+
+
+class EgresoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Egreso
+        fields = [
+            'id', 'fecha', 'monto', 'concepto', 'descripcion',
+            'categoria', 'comprobante', 'solicitud_mantenimiento'
+        ]
+
+class IngresoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ingreso
+        fields = [
+            'id', 'fecha', 'monto', 'concepto', 'descripcion', 'pago_relacionado'
+        ]

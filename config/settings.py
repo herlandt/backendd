@@ -37,7 +37,12 @@ INSTALLED_APPS = [
 ]
 FCM_SERVER_KEY = 'xhdePFTJ5JCcWRkbXXaGoEq_6XUOTlFBWa7GomXTt_0'
 NOTIF_FAKE_SEND = True
+# config/settings.py
 
+# ... (toda tu configuración existente) ...
+
+# ========= CLAVE DE API PARA LA CÁMARA DE IA =========
+CAMARA_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

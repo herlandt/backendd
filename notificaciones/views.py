@@ -39,3 +39,29 @@ class EnviarNotificacionDemoView(APIView):
 
         res = send_push(tokens, title, body, data)
         return Response(res, status=status.HTTP_200_OK)
+
+# notificaciones/views.py
+
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from .models import Dispositivo
+from .serializers import DispositivoSerializer
+
+class RegistrarDispositivoView(generics.CreateAPIView):
+    """
+    Endpoint para que la app móvil registre el token de un dispositivo
+    y lo asocie con el usuario autenticado.
+    """
+    queryset = Dispositivo.objects.all()
+    serializer_class = DispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        # Asocia el dispositivo con el usuario que hace la petición
+        token = serializer.validated_data.get('token_dispositivo')
+        # Usamos get_or_create para no tener tokens duplicados
+        Dispositivo.objects.get_or_create(token_dispositivo=token, defaults={'usuario': self.request.user})
+
+    def create(self, request, *args, **kwargs):
+        super().create(request, *args, **kwargs)
+        return Response({"detail": "Dispositivo registrado correctamente."}, status=status.HTTP_201_CREATED)

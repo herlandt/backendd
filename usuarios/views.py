@@ -8,7 +8,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.serializers import AuthTokenSerializer
+# seguridad/views.py
 
+# ... (importaciones existentes) ...
+# <-- Para buscar a los administradores
+
+# ... (el resto de tus importaciones) ...
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -24,7 +29,8 @@ from .serializers import (
     RegistroSerializer,
 )
 
-
+from notificaciones.services import notificar_usuario # <-- Servicio para enviar notificaciones
+from usuarios.models import User 
 # ---------------------------
 # Residentes (CRUD admin)
 # ---------------------------
@@ -190,3 +196,10 @@ class RegistrarDispositivoView(APIView):
         residente.save(update_fields=["fcm_token"])
 
         return Response({"ok": True, "detail": "Token registrado con éxito."}, status=status.HTTP_200_OK)
+
+
+# seguridad/views.py
+
+# ... (importaciones y otras vistas) ...
+
+# ========= VISTA FINAL PARA LA CÁMARA DE IA (CON NOTIFICACIONES) =========

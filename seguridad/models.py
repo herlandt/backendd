@@ -47,3 +47,43 @@ class Visita(models.Model):
 
     def __str__(self):
         return f"{self.visitante} → {self.propiedad}"
+
+# seguridad/models.py
+
+# ... (tus otros modelos: Visitante, Vehiculo, Visita) ...
+
+# ========= NUEVO MODELO PARA REGISTRO DE EVENTOS DE IA =========
+
+class EventoSeguridad(models.Model):
+    """
+    Registra cada evento de acceso detectado por un sistema de IA,
+    como una cámara de reconocimiento de matrículas.
+    """
+    class TipoEvento(models.TextChoices):
+        INGRESO = 'INGRESO', 'Ingreso Vehicular'
+        SALIDA = 'SALIDA', 'Salida Vehicular'
+
+    class AccionTomada(models.TextChoices):
+        PERMITIDO = 'PERMITIDO', 'Acceso Permitido'
+        DENEGADO = 'DENEGADO', 'Acceso Denegado'
+
+    fecha_hora = models.DateTimeField(auto_now_add=True)
+    tipo_evento = models.CharField(max_length=10, choices=TipoEvento.choices)
+    placa_detectada = models.CharField(max_length=20, help_text="La matrícula tal como fue detectada por la IA.")
+    accion = models.CharField(max_length=10, choices=AccionTomada.choices)
+    motivo = models.CharField(max_length=255, help_text="Razón por la que se tomó la acción (ej. 'Placa no encontrada').")
+    vehiculo_registrado = models.ForeignKey(
+        Vehiculo,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        help_text="Vehículo correspondiente en la base de datos, si existe."
+    )
+
+    class Meta:
+        verbose_name = "Evento de Seguridad IA"
+        verbose_name_plural = "Eventos de Seguridad IA"
+        ordering = ['-fecha_hora']
+
+    def __str__(self):
+        return f"[{self.fecha_hora.strftime('%Y-%m-%d %H:%M')}] {self.accion}: {self.placa_detectada}"

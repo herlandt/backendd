@@ -19,3 +19,11 @@ class DeviceTokenSerializer(serializers.ModelSerializer):
             defaults={"user": user, "platform": platform, "active": True},
         )
         return obj
+
+from rest_framework import serializers
+from .models import Dispositivo # <-- Usa el nombre correcto
+
+class DispositivoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dispositivo
+        fields = ['token_dispositivo'] # Solo necesitamos el token del dispositivo

@@ -1,7 +1,7 @@
 # seguridad/admin.py
 from django.contrib import admin
 from django.utils import timezone
-from .models import Visitante, Vehiculo, Visita
+from .models import Visitante, Vehiculo, Visita,EventoSeguridad 
 
 
 # --- Acción: cerrar visitas vencidas (ingresó, no salió y ya venció la salida programada)
@@ -56,3 +56,12 @@ class VisitaAdmin(admin.ModelAdmin):
         if obj.ingreso_real and not obj.salida_real:
             return "ABIERTA"
         return "CERRADA"
+
+
+
+@admin.register(EventoSeguridad)
+class EventoSeguridadAdmin(admin.ModelAdmin):
+    list_display = ('fecha_hora', 'placa_detectada', 'accion', 'tipo_evento', 'motivo')
+    list_filter = ('accion', 'tipo_evento', 'fecha_hora')
+    search_fields = ('placa_detectada', 'motivo')
+    list_per_page = 25
