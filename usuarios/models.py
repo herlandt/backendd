@@ -1,38 +1,21 @@
 # En usuarios/models.py
 
-from django.contrib.auth.models import AbstractUser,Group, Permission
 from django.db import models
+from django.contrib.auth.models import User
 
-class Usuario(AbstractUser):
-    # AbstractUser ya incluye: username, password, email, first_name, last_name.
-    # Puedes añadir campos extra si los necesitas en el futuro.
-    pass
-    groups = models.ManyToManyField(
-        Group,
-        verbose_name='groups',
-        blank=True,
-        help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.',
-        related_name="usuario_set", # Nombre único para la relación inversa
-        related_query_name="usuario",
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        verbose_name='user permissions',
-        blank=True,
-        help_text='Specific permissions for this user.',
-        related_name="usuario_set", # Nombre único para la relación inversa
-        related_query_name="usuario",
-    )
- # Por ahora lo dejamos así para no añadir campos extra.
+# NO importamos Propiedad directamente para evitar el ciclo.
 
 class Residente(models.Model):
-    # Aquí vinculas tu modelo Residente con el nuevo modelo Usuario
-    usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    # --- ESTA ES LA ÚNICA CORRECCIÓN REAL ---
+    # Usamos una referencia en texto ('app.Modelo') que Django resuelve después.
     propiedad = models.ForeignKey(
         'condominio.Propiedad', 
         on_delete=models.CASCADE, 
         related_name='residentes'
     )
+    
     ROL_CHOICES = (
         ('propietario', 'Propietario'),
         ('inquilino', 'Inquilino'),

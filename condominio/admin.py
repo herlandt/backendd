@@ -8,10 +8,9 @@ class PropiedadAdmin(admin.ModelAdmin):
     list_display = ('id', 'numero_casa', 'propietario')
     search_fields = ('numero_casa', 'propietario__username')
     
-    # 2. ESTA ES LA LÍNEA MÁGICA:
-    # Cambia el campo de texto por una ventana de búsqueda que SÍ funciona.
-    raw_id_fields = ('propietario',)
-
+    # --- CAMBIO FINAL ---
+    # Reemplazamos 'raw_id_fields' por 'autocomplete_fields'.
+    autocomplete_fields = ('propietario',)
 
     
 @admin.register(AreaComun)
