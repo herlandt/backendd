@@ -9,6 +9,7 @@ from .views import (
     DashboardSeriesView,
     DashboardTopVisitantesView,
     IAControlVehicularView ,
+    VerificarRostroView ,
 )
 
 app_name = "seguridad"
@@ -28,5 +29,5 @@ urlpatterns = [
     path("dashboard/series/", DashboardSeriesView.as_view(), name="dashboard-series"),
     path("dashboard/top-visitantes/", DashboardTopVisitantesView.as_view(), name="dashboard-top-visitantes"),
     path('ia/control-vehicular/', IAControlVehicularView.as_view(), name='ia-control-vehicular'),
-    #path('ia/verificar-rostro/', VerificarRostroView.as_view(), name='ia-verificar-rostro'),
+    path('ia/verificar-rostro/', VerificarRostroView.as_view(), name='ia-verificar-rostro'),
 ]
