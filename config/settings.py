@@ -161,4 +161,4 @@ SPECTACULAR_SETTINGS = {
     'SECURITY': [{'TokenAuth': []}],
 }
 
-AWS_REKOGNITION_COLLECTION_ID = "condominio_residentes"
+AWS_REKOGNITION_COLLECTION_ID = "condominio-rostros"

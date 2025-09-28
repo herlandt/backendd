@@ -1,8 +1,8 @@
 # seguridad/services/rekog.py
 import boto3, io
-
+from django.conf import settings
 REKOG_REGION = "us-east-1"                 # ajusta
-REKOG_COLLECTION = "condominio-rostros"    # tu colección ya creada
+REKOG_COLLECTION = settings.AWS_REKOGNITION_COLLECTION_ID
 
 rekog = boto3.client("rekognition", region_name=REKOG_REGION)
 

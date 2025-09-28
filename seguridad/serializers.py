@@ -44,19 +44,3 @@ class DeteccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Deteccion
         fields = ["id","camera","matched_username","similarity","face_id","ts","frame","raw"]
-
-# seguridad/views.py
-from rest_framework import generics, permissions
-from seguridad.models import Deteccion
-from .serializers import DeteccionSerializer
-
-class DeteccionListView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = DeteccionSerializer
-
-    def get_queryset(self):
-        qs = Deteccion.objects.all()
-        cam = self.request.query_params.get("camera")
-        if cam:
-            qs = qs.filter(camera__name=cam)
-        return qs

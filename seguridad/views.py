@@ -264,3 +264,20 @@ class VerificarRostroView(APIView):
             return Response({"error": "No se detectó un rostro en la imagen enviada."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": f"Error al procesar la imagen con AWS: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# seguridad/views.py
+from rest_framework import generics, permissions
+from seguridad.models import Deteccion
+from .serializers import DeteccionSerializer
+
+class DeteccionListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DeteccionSerializer
+
+    def get_queryset(self):
+        qs = Deteccion.objects.all()
+        cam = self.request.query_params.get("camera")
+        if cam:
+            qs = qs.filter(camera__name=cam)
+        return qs

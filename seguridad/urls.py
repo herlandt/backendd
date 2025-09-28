@@ -10,6 +10,7 @@ from .views import (
     DashboardTopVisitantesView,
     IAControlVehicularView ,
     VerificarRostroView ,
+    DeteccionListView  ,
 )
 
 app_name = "seguridad"
