@@ -63,3 +63,30 @@ class Regla(models.Model):
 
     def __str__(self):
         return self.titulo
+    
+# En condominio/models.py
+
+from django.db import models
+from usuarios.models import Usuario
+from decimal import Decimal
+
+# ... (tus otros modelos como AreaComun, etc.)
+
+class Reserva(models.Model):
+    area_comun = models.ForeignKey('AreaComun', on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    fecha_reserva = models.DateField()
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    costo = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    ESTADOS = [
+        ('SOLICITADA', 'Solicitada'),
+        ('CONFIRMADA', 'Confirmada'),
+        ('PAGADA', 'Pagada'),
+        ('CANCELADA', 'Cancelada'),
+    ]
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='SOLICITADA')
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Reserva de {self.area_comun} por {self.usuario} el {self.fecha_reserva}"

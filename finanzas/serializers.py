@@ -1,6 +1,8 @@
 import requests
 from django.conf import settings
 from .models import Pago
+from rest_framework import serializers
+from .models import Gasto, Pago, Multa
 
 def iniciar_pago_qr(pago_id):
     """
@@ -76,3 +78,29 @@ def es_residente_moroso(usuario, meses_limite=None):
         query = query.filter(fecha_vencimiento__lt=fecha_limite)
 
     return query.exists()
+class GastoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Gasto
+        fields = '__all__'
+
+
+class PagoMultaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pago
+        fields = '__all__'
+class PagoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Pago
+        fields = '__all__'
+
+class MultaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Multa
+        fields = '__all__'
+    
+
+# Al final de finanzas/serializers.py
+class ReservaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reserva
+        fields = '__all__'
