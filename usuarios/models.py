@@ -13,8 +13,10 @@ class Residente(models.Model):
     propiedad = models.ForeignKey(
         'condominio.Propiedad', 
         on_delete=models.CASCADE, 
-        related_name='residentes'
-    )
+        related_name='residentes',
+        null=True,  # Permite que el campo esté vacío en la base de datos
+        blank=True  # Permite que el campo esté vacío en los formularios del admin
+     )
     
     ROL_CHOICES = (
         ('propietario', 'Propietario'),
