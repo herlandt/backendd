@@ -450,3 +450,14 @@ class PagarReservaView(APIView):
 
         except Reserva.DoesNotExist:
             return Response({"detail": "Reserva no encontrada."}, status=status.HTTP_404_NOT_FOUND)
+        
+
+# V AÑADE ESTA NUEVA CLASE AL FINAL V
+class PagarReservaView(APIView):
+    def post(self, request, reserva_id):
+        # Aquí irá tu lógica para procesar el pago de la reserva.
+        # Por ejemplo, encontrar la reserva, crear un objeto de Pago, etc.
+        return Response(
+            {"message": f"Lógica de pago para la reserva {reserva_id} aún no implementada."}, 
+            status=status.HTTP_200_OK
+        )

@@ -74,7 +74,7 @@ from decimal import Decimal
 
 class Reserva(models.Model):
     area_comun = models.ForeignKey('AreaComun', on_delete=models.CASCADE)
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha_reserva = models.DateField()
     hora_inicio = models.TimeField()
     hora_fin = models.TimeField()

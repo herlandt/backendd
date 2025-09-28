@@ -11,6 +11,7 @@ from .views import (
     ReciboPagoMultaPDFView,
     ReporteMorosidadView,
     ReporteResumenView,
+    PagarReservaView ,
 )
 
 router = DefaultRouter()

@@ -3,7 +3,9 @@ from django.conf import settings
 from .models import Pago
 from rest_framework import serializers
 from .models import Gasto, Pago, Multa
+# En finanzas/serializers.py
 
+from condominio.models import Reserva # <-- AÑADE ESTA LÍNEA
 def iniciar_pago_qr(pago_id):
     """
     Se comunica con PagosNet para generar una transacción QR.
@@ -55,29 +57,6 @@ def iniciar_pago_qr(pago_id):
 from django.utils import timezone
 from datetime import timedelta
 
-def es_residente_moroso(usuario, meses_limite=None):
-    """
-    Verifica si un usuario asociado a una propiedad tiene deudas vencidas.
-    Si 'meses_limite' es un número, verifica deudas vencidas por más de esa cantidad de meses.
-    """
-    propiedades = Propiedad.objects.filter(propietario=usuario)
-    if not propiedades.exists():
-        return False # No es propietario, no tiene deudas de expensas
-
-    hoy = timezone.now().date()
-
-    # Construimos el query para gastos no pagados y vencidos
-    query = Gasto.objects.filter(
-        propiedad__in=propiedades,
-        pagado=False,
-        fecha_vencimiento__lt=hoy
-    )
-
-    if meses_limite:
-        fecha_limite = hoy - timedelta(days=30 * meses_limite)
-        query = query.filter(fecha_vencimiento__lt=fecha_limite)
-
-    return query.exists()
 class GastoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gasto
