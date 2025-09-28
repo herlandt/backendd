@@ -1,12 +1,14 @@
-from django.urls import path, include
+# condominio/urls.py (Corregido)
 from rest_framework.routers import DefaultRouter
-from .views import PropiedadViewSet, AreaComunViewSet, AvisoViewSet # Verifica esta línea
+# --- CORRECCIÓN AQUÍ ---
+# Se añade ReglaViewSet a la lista de importaciones desde las vistas.
+from .views import PropiedadViewSet, AreaComunViewSet, AvisoViewSet, ReglaViewSet
 
 router = DefaultRouter()
 router.register(r'propiedades', PropiedadViewSet)
 router.register(r'areas-comunes', AreaComunViewSet)
-router.register(r'avisos', AvisoViewSet) # Y esta línea
+router.register(r'avisos', AvisoViewSet)
+# Esta línea ahora funcionará porque ReglaViewSet está importado.
 router.register(r'reglas', ReglaViewSet, basename='regla')
-urlpatterns = [
-    path('', include(router.urls)),
-]
+
+urlpatterns = router.urls

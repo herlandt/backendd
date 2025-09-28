@@ -1,10 +1,22 @@
+# condominio/models.py (Corregido)
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings # Se importa settings
+
+# Se eliminan las importaciones problemáticas que causaban el ciclo.
 
 class Propiedad(models.Model):
     numero_casa = models.CharField(max_length=10, unique=True)
-    propietario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='propiedades')
+    # --- CORRECCIÓN AQUÍ ---
+    # Se usa la referencia de Django al modelo de usuario activo.
+    # Esto rompe la dependencia directa y soluciona el ciclo de importación.
+    propietario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='propiedades'
+    )
     metros_cuadrados = models.DecimalField(max_digits=8, decimal_places=2)
+
     def __str__(self):
         return f"Casa N° {self.numero_casa}"
 
@@ -15,9 +27,10 @@ class AreaComun(models.Model):
     costo_reserva = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
     horario_apertura = models.TimeField(null=True, blank=True)
     horario_cierre = models.TimeField(null=True, blank=True)
+    
     def __str__(self):
         return self.nombre
-    
+
 class Aviso(models.Model):
     titulo = models.CharField(max_length=200)
     contenido = models.TextField()
@@ -25,8 +38,6 @@ class Aviso(models.Model):
 
     def __str__(self):
         return self.titulo
-    
-# ... (importaciones y modelos existentes)
 
 class Regla(models.Model):
     """

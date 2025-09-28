@@ -1,11 +1,16 @@
+# usuarios/models.py (Corregido)
 from django.db import models
 from django.contrib.auth.models import User
-# Importamos Propiedad desde la app 'condominio'
-from condominio.models import Propiedad
+
+# Se elimina la importación directa de 'Propiedad' para romper el ciclo.
+# from condominio.models import Propiedad
 
 class Residente(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name='residentes')
+    # --- CORRECCIÓN AQUÍ ---
+    # Se usa una referencia en formato de texto 'app.Modelo'.
+    # Django resolverá esta relación sin necesidad de importar el modelo directamente.
+    propiedad = models.ForeignKey('condominio.Propiedad', on_delete=models.CASCADE, related_name='residentes')
     ROL_CHOICES = (
         ('propietario', 'Propietario'),
         ('inquilino', 'Inquilino'),
@@ -15,4 +20,7 @@ class Residente(models.Model):
     fcm_token = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.usuario.username} - {self.propiedad}"
+        # Es más seguro verificar si la propiedad existe antes de imprimirla
+        if hasattr(self, 'propiedad') and self.propiedad:
+            return f"{self.usuario.username} - {self.propiedad}"
+        return self.usuario.username
