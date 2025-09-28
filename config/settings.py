@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 ]
 FCM_SERVER_KEY = 'xhdePFTJ5JCcWRkbXXaGoEq_6XUOTlFBWa7GomXTt_0'
 NOTIF_FAKE_SEND = True
+
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
