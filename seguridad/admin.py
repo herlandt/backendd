@@ -57,6 +57,10 @@ class VisitaAdmin(admin.ModelAdmin):
             return "ABIERTA"
         return "CERRADA"
 
+from django.contrib import admin
+from .models import Camera, Deteccion
+admin.site.register(Camera)
+admin.site.register(Deteccion)
 
 
 @admin.register(EventoSeguridad)

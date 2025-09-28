@@ -87,3 +87,29 @@ class EventoSeguridad(models.Model):
 
     def __str__(self):
         return f"[{self.fecha_hora.strftime('%Y-%m-%d %H:%M')}] {self.accion}: {self.placa_detectada}"
+    
+# seguridad/models.py  (o una app "vision")
+from django.db import models
+from django.conf import settings
+
+class Camera(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    rtsp_url = models.CharField(max_length=500)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+class Deteccion(models.Model):
+    camera = models.ForeignKey(Camera, on_delete=models.CASCADE, related_name="detecciones")
+    matched_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    face_id = models.CharField(max_length=100, blank=True, default="")
+    similarity = models.FloatField(null=True, blank=True)  # 0..100
+    ts = models.DateTimeField(auto_now_add=True)
+    frame = models.ImageField(upload_to="detecciones/%Y/%m/%d/", blank=True)
+    raw = models.JSONField(default=dict, blank=True)  # respuesta completa del proveedor
+
+    class Meta:
+        ordering = ["-ts"]
