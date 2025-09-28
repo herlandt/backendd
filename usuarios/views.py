@@ -25,7 +25,7 @@ from drf_spectacular.utils import (
     OpenApiExample,
 )
 # usuarios/views.py
-#from .permissions import HasAPIKey 
+
 # ... (importaciones existentes) ...
 import boto3
 from django.conf import settings
@@ -285,61 +285,3 @@ class RegistrarRostroView(APIView):
 # ... (tus otras vistas) ...
 
 # ========= VISTA PARA VERIFICACIÓN FACIAL EN TIEMPO REAL =========
-
-class VerificarRostroView(APIView):
-    """
-    Endpoint para la cámara de IA. Recibe una foto, busca el rostro
-    en la colección de AWS y devuelve si es un residente conocido.
-    """
-    permission_classes = [HasAPIKey] # Reutilizamos la misma seguridad de API Key
-    parser_classes = [MultiPartParser, FormParser]
-
-    def post(self, request, *args, **kwargs):
-        if 'foto' not in request.FILES:
-            return Response({"error": "No se ha proporcionado ninguna foto."}, status=status.HTTP_400_BAD_REQUEST)
-
-        foto = request.FILES['foto']
-        image_bytes = foto.read()
-
-        try:
-            rekognition_client = boto3.client('rekognition')
-            collection_id = settings.AWS_REKOGNITION_COLLECTION_ID
-        except Exception as e:
-            return Response({"error": f"Error de configuración de AWS: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        try:
-            # 1. Buscar el rostro en nuestra colección de residentes
-            response = rekognition_client.search_faces_by_image(
-                CollectionId=collection_id,
-                Image={'Bytes': image_bytes},
-                MaxFaces=1,
-                FaceMatchThreshold=85 # Umbral de confianza del 85%
-            )
-
-            if not response['FaceMatches']:
-                # Si no hay coincidencias, es un desconocido
-                return Response({"detail": "Acceso denegado. Rostro no reconocido."}, status=status.HTTP_403_FORBIDDEN)
-
-            # 2. Si hay coincidencia, obtenemos el FaceId que guardamos
-            face_match = response['FaceMatches'][0]
-            face_id = face_match['Face']['FaceId']
-
-            # 3. Buscamos al residente en nuestra base de datos con ese FaceId
-            try:
-                residente = Residente.objects.get(face_id_aws=face_id)
-                # Aquí podrías añadir lógica extra (ej. verificar si el residente está al día con sus pagos)
-
-                return Response({
-                    "detail": f"Acceso permitido para {residente.usuario.get_full_name()}.",
-                    "residente_id": residente.id,
-                    "confianza": f"{face_match['Similarity']:.2f}%"
-                }, status=status.HTTP_200_OK)
-            except Residente.DoesNotExist:
-                # Esto es raro, significa que el rostro está en AWS pero no en nuestra DB.
-                # Por seguridad, denegamos el acceso.
-                return Response({"detail": "Acceso denegado. Rostro no sincronizado."}, status=status.HTTP_403_FORBIDDEN)
-
-        except rekognition_client.exceptions.InvalidParameterException:
-            return Response({"error": "No se detectó un rostro en la imagen enviada."}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({"error": f"Error al procesar la imagen con AWS: {e}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
