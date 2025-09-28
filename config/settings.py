@@ -160,3 +160,5 @@ SPECTACULAR_SETTINGS = {
     # 'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SECURITY': [{'TokenAuth': []}],
 }
+
+AWS_REKOGNITION_COLLECTION_ID = "condominio_residentes"

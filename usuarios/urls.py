@@ -3,7 +3,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView
+from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView,RegistrarRostroView
 
 router = DefaultRouter()
 router.register("residentes", ResidenteViewSet, basename="residente")
@@ -18,4 +18,8 @@ urlpatterns = [
 
     # Dispositivos
     path("dispositivos/registrar/", RegistrarDispositivoView.as_view(), name="registrar_dispositivo"),
+
+    # --- NUEVA RUTA PARA REGISTRO FACIAL ---
+   path("reconocimiento/registrar-rostro/", RegistrarRostroView.as_view(), name="registrar-rostro"),
+  path('ia/verificar-rostro/', VerificarRostroView.as_view(), name='ia-verificar-rostro'),
 ]

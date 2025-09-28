@@ -7,7 +7,13 @@ from django.contrib.auth.models import User
 
 class Residente(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE)
-    
+    face_id_aws = models.CharField(
+        max_length=255, 
+        blank=True, 
+        null=True, 
+        unique=True,
+        help_text="ID único del rostro asignado por AWS Rekognition."
+    )
     # --- ESTA ES LA ÚNICA CORRECCIÓN REAL ---
     # Usamos una referencia en texto ('app.Modelo') que Django resuelve después.
     propiedad = models.ForeignKey(

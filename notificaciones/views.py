@@ -1,31 +1,55 @@
+from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework import status
 
-from .serializers import DeviceTokenSerializer
-from .models import DeviceToken
-from .services import send_push
+from .models import DeviceToken, Dispositivo
+from .serializers import DeviceTokenSerializer, DispositivoSerializer
+from .services import send_push  # asumiendo que ya lo tienes
 
 class RegistrarDeviceTokenView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        ser = DeviceTokenSerializer(data=request.data, context={"request": request})
+    def post(self, request):
+        ser = DeviceTokenSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
-        obj = ser.save()
-        return Response({"id": obj.id, "detail": "token registrado"}, status=status.HTTP_201_CREATED)
+        obj, created = DeviceToken.objects.update_or_create(
+            token=ser.validated_data["token"],
+            defaults={
+                "user": request.user,
+                "platform": ser.validated_data.get("platform", "web"),
+                "active": True,
+            },
+        )
+        return Response(DeviceTokenSerializer(obj).data,
+                        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class RegistrarDispositivoView(generics.CreateAPIView):
+    queryset = Dispositivo.objects.all()
+    serializer_class = DispositivoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        token = serializer.validated_data["token_dispositivo"]
+        Dispositivo.objects.update_or_create(
+            token_dispositivo=token,
+            defaults={"usuario": self.request.user, "activo": True},
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response({"detail": "Dispositivo registrado correctamente."},
+                        status=status.HTTP_201_CREATED)
+
 
 class EnviarNotificacionDemoView(APIView):
-    """
-    Admin-only. Envía una notificación de prueba:
-      POST { "title": "Hola", "body": "Mensaje", "user_id": <opcional>, "data": {...} }
-    """
-    permission_classes = [IsAdminUser]
+    permission_classes = [permissions.IsAdminUser]
 
-    def post(self, request, *args, **kwargs):
-        title = request.data.get("title") or "Demo"
-        body = request.data.get("body") or "Mensaje de prueba"
+    def post(self, request):
+        title = request.data.get("title", "Demo")
+        body = request.data.get("body", "Mensaje de prueba")
         data = request.data.get("data") or {}
         user_id = request.data.get("user_id")
 
@@ -39,29 +63,3 @@ class EnviarNotificacionDemoView(APIView):
 
         res = send_push(tokens, title, body, data)
         return Response(res, status=status.HTTP_200_OK)
-
-# notificaciones/views.py
-
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
-from .models import Dispositivo
-from .serializers import DispositivoSerializer
-
-class RegistrarDispositivoView(generics.CreateAPIView):
-    """
-    Endpoint para que la app móvil registre el token de un dispositivo
-    y lo asocie con el usuario autenticado.
-    """
-    queryset = Dispositivo.objects.all()
-    serializer_class = DispositivoSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        # Asocia el dispositivo con el usuario que hace la petición
-        token = serializer.validated_data.get('token_dispositivo')
-        # Usamos get_or_create para no tener tokens duplicados
-        Dispositivo.objects.get_or_create(token_dispositivo=token, defaults={'usuario': self.request.user})
-
-    def create(self, request, *args, **kwargs):
-        super().create(request, *args, **kwargs)
-        return Response({"detail": "Dispositivo registrado correctamente."}, status=status.HTTP_201_CREATED)
