@@ -2,11 +2,11 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal
 import io
 import csv
+import json # Importa json para formatear la descripción
+
 # finanzas/views.py
 
-# ... (otras importaciones) ...
-from django.db.models import Sum, Count, F, ExpressionWrapper, fields # <--- AÑADE O COMPLETA ESTA LÍNEA
-# ... (el resto de las importaciones) ...
+from django.db.models import Sum, Count, F, ExpressionWrapper, fields, Q
 from django.db import IntegrityError, transaction
 from django.http import HttpResponse
 from django.utils import timezone
@@ -24,13 +24,16 @@ from .serializers import (
     GastoSerializer, PagoSerializer, MultaSerializer,
     PagoMultaSerializer, ReservaSerializer,EgresoSerializer, IngresoSerializer
 )
-from .services import simular_pago_qr
+from .services import simular_pago_qr, iniciar_pago_qr
 
 from auditoria.services import registrar_evento
 
 def _ip(request):
-    # Usa la IP del middleware si existe; si no, REMOTE_ADDR como fallback.
     return getattr(request, "ip_address", request.META.get("REMOTE_ADDR"))
+
+def format_description(data):
+    """Convierte un diccionario a un string JSON para la bitácora."""
+    return json.dumps(data, indent=4, default=str)
 
 # =========================
 #        GASTOS
@@ -42,6 +45,7 @@ class GastoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='crear_mensual', permission_classes=[IsAdminUser])
     def crear_mensual(self, request):
+        # ... (lógica de la función sin cambios) ...
         descripcion = (request.data.get('descripcion') or '').strip()
         monto_raw = request.data.get('monto')
         fecha_str = request.data.get('fecha') or request.data.get('fecha_emision')
@@ -91,6 +95,19 @@ class GastoViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 errores.append({'propiedad_id': prop.id, 'error': str(e)})
 
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Creación Masiva de Gastos Mensuales",
+            ip_address=_ip(request),
+            descripcion=format_description({
+                "mes": mes, "año": anio, "monto_individual": monto,
+                "gastos_creados": creados, "propiedades_duplicadas": duplicados,
+                "errores": errores
+            })
+        )
+        # --- FIN CORRECCIÓN ---
+
         payload = {
             'status': f'Gastos creados: {creados}',
             'mes': mes, 'anio': anio,
@@ -114,8 +131,19 @@ class GastoViewSet(viewsets.ModelViewSet):
                 monto_pagado=monto,
             )
             gasto.pagado = True
-            
             gasto.save(update_fields=['pagado'])
+            
+            # --- CORRECCIÓN DE AUDITORÍA ---
+            registrar_evento(
+                usuario=request.user,
+                accion="Registro de Pago Individual",
+                ip_address=_ip(request),
+                descripcion=format_description({
+                    "pago_id": pago.id, "gasto_id": gasto.id,
+                    "monto_pagado": str(monto), "propiedad_id": gasto.propiedad.id
+                })
+            )
+            # --- FIN CORRECCIÓN ---
 
         return Response(PagoSerializer(pago).data, status=status.HTTP_201_CREATED)
 
@@ -124,17 +152,20 @@ class GastoViewSet(viewsets.ModelViewSet):
         ids = request.data.get('ids') or []
         if not isinstance(ids, list) or not ids:
             return Response({'detail': 'Proporcione una lista "ids".'}, status=status.HTTP_400_BAD_REQUEST)
-
-        hechos, ya_pagados = 0, []
+        
+        hechos, ya_pagados, no_encontrados = 0, [], []
+        pagos_creados_ids = []
+        
         for gid in ids:
             try:
                 gasto = Gasto.objects.get(pk=gid)
             except Gasto.DoesNotExist:
+                no_encontrados.append(gid)
                 continue
             if gasto.pagado:
                 ya_pagados.append(gid)
                 continue
-            Pago.objects.create(
+            pago = Pago.objects.create(
                 gasto=gasto,
                 usuario=request.user if request.user.is_authenticated else None,
                 monto_pagado=gasto.monto,
@@ -142,17 +173,49 @@ class GastoViewSet(viewsets.ModelViewSet):
             gasto.pagado = True
             gasto.save(update_fields=['pagado'])
             hechos += 1
+            pagos_creados_ids.append(pago.id)
+
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Registro de Pago en Lote",
+            ip_address=_ip(request),
+            descripcion=format_description({
+                "gastos_solicitados_ids": ids,
+                "gastos_pagados_count": hechos,
+                "pagos_creados_ids": pagos_creados_ids,
+                "gastos_ya_pagados_ids": ya_pagados,
+                "gastos_no_encontrados_ids": no_encontrados
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
         return Response({'pagados': hechos, 'ya_pagados': ya_pagados}, status=status.HTTP_201_CREATED)
 
 
 # =========================
-#        MULTAS
+#         MULTAS
 # =========================
 class MultaViewSet(viewsets.ModelViewSet):
     queryset = Multa.objects.select_related('propiedad').all()
     serializer_class = MultaSerializer
     permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        multa = serializer.save()
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Creación de Multa",
+            ip_address=_ip(self.request),
+            descripcion=format_description({
+                "multa_id": multa.id,
+                "propiedad_id": multa.propiedad.id,
+                "monto": str(multa.monto),
+                "motivo": multa.motivo,
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
     @action(detail=True, methods=['post'], url_path='registrar_pago')
     def registrar_pago(self, request, pk=None):
@@ -171,6 +234,18 @@ class MultaViewSet(viewsets.ModelViewSet):
             )
             multa.pagado = True
             multa.save(update_fields=['pagado'])
+            
+            # --- CORRECCIÓN DE AUDITORÍA ---
+            registrar_evento(
+                usuario=request.user,
+                accion="Registro de Pago de Multa Individual",
+                ip_address=_ip(request),
+                descripcion=format_description({
+                    "pago_multa_id": pago.id, "multa_id": multa.id,
+                    "monto_pagado": str(monto)
+                })
+            )
+            # --- FIN CORRECCIÓN ---
 
         return Response(PagoMultaSerializer(pago).data, status=status.HTTP_201_CREATED)
 
@@ -180,16 +255,19 @@ class MultaViewSet(viewsets.ModelViewSet):
         if not isinstance(ids, list) or not ids:
             return Response({'detail': 'Proporcione una lista "ids".'}, status=status.HTTP_400_BAD_REQUEST)
 
-        hechos, ya_pagados = 0, []
+        hechos, ya_pagados, no_encontrados = 0, [], []
+        pagos_multa_creados_ids = []
+
         for mid in ids:
             try:
                 multa = Multa.objects.get(pk=mid)
             except Multa.DoesNotExist:
+                no_encontrados.append(mid)
                 continue
             if multa.pagado:
                 ya_pagados.append(mid)
                 continue
-            PagoMulta.objects.create(
+            pago = PagoMulta.objects.create(
                 multa=multa,
                 usuario=request.user if request.user.is_authenticated else None,
                 monto_pagado=multa.monto,
@@ -197,6 +275,22 @@ class MultaViewSet(viewsets.ModelViewSet):
             multa.pagado = True
             multa.save(update_fields=['pagado'])
             hechos += 1
+            pagos_multa_creados_ids.append(pago.id)
+
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Registro de Pago de Multas en Lote",
+            ip_address=_ip(request),
+            descripcion=format_description({
+                "multas_solicitadas_ids": ids,
+                "multas_pagadas_count": hechos,
+                "pagos_multa_creados_ids": pagos_multa_creados_ids,
+                "multas_ya_pagadas_ids": ya_pagados,
+                "multas_no_encontradas_ids": no_encontrados
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
         return Response({'pagados': hechos, 'ya_pagados': ya_pagados}, status=status.HTTP_201_CREATED)
 
@@ -210,8 +304,19 @@ class PagoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
-
+        pago = serializer.save(usuario=self.request.user)
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Creación de Objeto de Pago (Genérico)",
+            ip_address=_ip(self.request),
+            descripcion=format_description({
+                "pago_id": pago.id, 
+                "gasto_id": pago.gasto.id if pago.gasto else None, 
+                "monto": str(pago.monto_pagado)
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
 class PagoMultaViewSet(viewsets.ModelViewSet):
     queryset = PagoMulta.objects.select_related('multa', 'usuario').all()
@@ -219,9 +324,21 @@ class PagoMultaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        pago_multa = serializer.save(usuario=self.request.user)
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Creación de Objeto de Pago de Multa (Genérico)",
+            ip_address=_ip(self.request),
+            descripcion=format_description({
+                "pago_multa_id": pago_multa.id, 
+                "multa_id": pago_multa.multa.id if pago_multa.multa else None, 
+                "monto": str(pago_multa.monto_pagado)
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
-
+# ... (El resto del archivo views.py permanece igual)
 # =========================
 #        RESERVAS
 # =========================
@@ -231,7 +348,18 @@ class ReservaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        reserva = serializer.save(usuario=self.request.user)
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Creación de Reserva",
+            ip_address=_ip(self.request),
+            descripcion=format_description({
+                "reserva_id": reserva.id, "area_comun_id": reserva.area_comun.id,
+                "fecha_reserva": reserva.fecha_reserva.isoformat()
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
 
 # ------------ Comprobantes (PDF con fallback a TXT) ------------
@@ -263,7 +391,7 @@ class _ReciboBase:
 
 
 class ReciboPagoPDFView(APIView):
-    permission_classes = [AllowAny]  # déjalo abierto para probar fácil
+    permission_classes = [AllowAny]
 
     def get(self, request, pago_id: int, *args, **kwargs):
         title = f"Recibo de pago #{pago_id}"
@@ -320,9 +448,7 @@ class ReporteMorosidadView(APIView):
         mes = request.query_params.get("mes")
         anio = request.query_params.get("anio")
         fmt = (request.query_params.get("fmt") or "json").lower()
-
-        data = []  # aquí luego metes la lógica real
-
+        data = []
         if fmt == "csv":
             resp = HttpResponse(content_type="text/csv")
             resp["Content-Disposition"] = 'attachment; filename="estado_morosidad.csv"'
@@ -331,7 +457,6 @@ class ReporteMorosidadView(APIView):
             for row in data:
                 w.writerow(row)
             return resp
-
         return Response({"mes": mes, "anio": anio, "items": data})
 
 
@@ -359,22 +484,18 @@ class SimularPagoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pago_id, *args, **kwargs):
-        # 1) El pago debe ser del usuario autenticado
         try:
             pago = Pago.objects.select_related('gasto', 'reserva').get(id=pago_id, usuario=request.user)
         except Pago.DoesNotExist:
             return Response({"error": "Pago no encontrado o no te pertenece."}, status=status.HTTP_404_NOT_FOUND)
 
-        # 2) Si ya está pagado, no repetir
         if getattr(pago, "estado_pago", "") == "PAGADO":
             return Response({"mensaje": "Este pago ya fue realizado."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 3) Llamar a TU servicio simulado
-        data = simular_pago_qr(pago_id)
+        data = simular_pago_qr(pago.id)
         if "error" in data:
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        # 4) Refrescar y marcar deudas como pagadas
         pago.refresh_from_db()
         if getattr(pago, "gasto_id", None):
             pago.gasto.pagado = True
@@ -392,19 +513,27 @@ class SimularPagoView(APIView):
 
 
 class WebhookConfirmacionPagoView(APIView):
-    permission_classes = [AllowAny]  # debe ser público para la pasarela
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         data = request.data
         pago_id_externo = data.get('idExterno')
         estado_transaccion = data.get('estado')
+        
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=None,
+            accion="Webhook de Pasarela Recibido",
+            ip_address=_ip(request),
+            descripcion=format_description({"payload_recibido": data})
+        )
+        # --- FIN CORRECCIÓN ---
 
         try:
             pago = Pago.objects.get(id=int(pago_id_externo))
             if estado_transaccion == 'PAGADO':
                 pago.estado_pago = 'PAGADO'
                 pago.save(update_fields=["estado_pago"])
-                # aquí podrías emitir notificación push
             else:
                 pago.estado_pago = 'FALLIDO'
                 pago.save(update_fields=["estado_pago"])
@@ -426,7 +555,6 @@ class PagarReservaView(APIView):
         if getattr(reserva, "pagada", False):
             return Response({"detail": "Esta reserva ya fue pagada."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Crear un Pago pendiente para esa reserva
         pago = Pago.objects.create(
             reserva=reserva,
             usuario=request.user,
@@ -434,12 +562,10 @@ class PagarReservaView(APIView):
             estado_pago='PENDIENTE'
         )
 
-        # Simular pago ahora mismo
         data = simular_pago_qr(pago.id)
         if "error" in data:
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
-        # Asegurar que quede marcada la reserva como pagada
         reserva.pagada = True
         reserva.save(update_fields=["pagada"])
 
@@ -458,11 +584,12 @@ class GenerarExpensasView(APIView):
         fecha_vencimiento = request.data.get('fecha_vencimiento')
         if not all([monto, descripcion, fecha_vencimiento]):
             return Response({"error": "Monto, descripción y fecha_vencimiento son requeridos."},
-                            status=status.HTTP_400_BAD_REQUEST)
+                             status=status.HTTP_400_BAD_REQUEST)
 
         creados = 0
+        gastos_creados_ids = []
         for propiedad in Propiedad.objects.all():
-            Gasto.objects.create(
+            gasto = Gasto.objects.create(
                 propiedad=propiedad,
                 monto=monto,
                 fecha_emision=date.today(),
@@ -471,28 +598,30 @@ class GenerarExpensasView(APIView):
                 pagado=False
             )
             creados += 1
+            gastos_creados_ids.append(gasto.id)
+
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Generación Manual de Expensas",
+            ip_address=_ip(request),
+            descripcion=format_description({
+                "gastos_creados_count": creados,
+                "gastos_ids": gastos_creados_ids,
+                "monto_individual": monto,
+                "descripcion": descripcion
+            })
+        )
+        # --- FIN CORRECCIÓN ---
 
         return Response({"mensaje": f"{creados} gastos de expensas generados."}, status=status.HTTP_201_CREATED)
-
-# En finanzas/views.py
-
-# ... (tus otras importaciones y vistas se quedan igual)
-# finanzas/views.py# finanzas/views.py
-from django.db.models import Q
-from rest_framework import permissions
-from rest_framework.views import APIView
-from rest_framework.response import Response
-
-from .models import Gasto, Multa, Reserva
-from .serializers import GastoSerializer, MultaSerializer, ReservaSerializer
 
 class EstadoDeCuentaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
+        # ... (lógica sin cambios) ...
         usuario = request.user
-
-        # Gastos pendientes del propietario o de residentes vinculados
         gastos_pendientes = (
             Gasto.objects
             .filter(
@@ -502,8 +631,6 @@ class EstadoDeCuentaView(APIView):
             )
             .distinct()
         )
-
-        # (Opcional pero recomendado) incluir MULTAS pendientes
         multas_pendientes = (
             Multa.objects
             .filter(
@@ -513,63 +640,64 @@ class EstadoDeCuentaView(APIView):
             )
             .distinct()
         )
-
-        # Reservas pendientes tal como ya lo tenías
         reservas_pendientes = (
             Reserva.objects
             .filter(usuario=usuario, pagada=False)
             .distinct()
         )
-
         gastos_data = GastoSerializer(gastos_pendientes, many=True).data
         for item in gastos_data:
             item['tipo_deuda'] = 'gasto'
-
         multas_data = MultaSerializer(multas_pendientes, many=True).data
         for item in multas_data:
             item['tipo_deuda'] = 'multa'
-
         reservas_data = ReservaSerializer(reservas_pendientes, many=True).data
         for item in reservas_data:
             item['tipo_deuda'] = 'reserva'
-
         deudas_combinadas = gastos_data + multas_data + reservas_data
         return Response(deudas_combinadas)
 
 
 class EgresoViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint para la gestión de egresos del condominio.
-    Solo accesible por administradores.
-    """
     queryset = Egreso.objects.all()
     serializer_class = EgresoSerializer
-    permission_classes = [permissions.IsAdminUser] # Solo admins pueden gestionar egresos
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        egreso = serializer.save()
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Registro de Egreso",
+            ip_address=_ip(self.request),
+            descripcion=format_description({"egreso_id": egreso.id, "monto": str(egreso.monto), "categoria": egreso.categoria})
+        )
+        # --- FIN CORRECCIÓN ---
 
 class IngresoViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint para la gestión de ingresos del condominio.
-    Permite ver todos los ingresos y agregar ingresos manuales.
-    """
     queryset = Ingreso.objects.all()
     serializer_class = IngresoSerializer
-    permission_classes = [permissions.IsAdminUser] # Solo admins pueden gestionar ingresos
+    permission_classes = [permissions.IsAdminUser]
 
-
+    def perform_create(self, serializer):
+        ingreso = serializer.save()
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Registro de Ingreso Manual",
+            ip_address=_ip(self.request),
+            descripcion=format_description({"ingreso_id": ingreso.id, "monto": str(ingreso.monto), "concepto": ingreso.concepto})
+        )
+        # --- FIN CORRECCIÓN ---
 
 
 # ========= NUEVA VISTA PARA REPORTE FINANCIERO =========
 
 class ReporteFinancieroView(APIView):
-    """
-    Genera un reporte financiero con un resumen de ingresos y egresos
-    dentro de un rango de fechas.
-    Soporta dos formatos: JSON (defecto) y PDF (con ?formato=pdf).
-    """
     permission_classes = [permissions.IsAdminUser]
 
     def get_financial_data(self, request):
-        # Esta función extrae la lógica de cálculo para poder reutilizarla
+        # ... (lógica sin cambios) ...
         try:
             fecha_fin_str = request.query_params.get('fecha_fin', date.today().isoformat())
             fecha_fin = date.fromisoformat(fecha_fin_str)
@@ -604,28 +732,31 @@ class ReporteFinancieroView(APIView):
         data, error_response = self.get_financial_data(request)
         if error_response:
             return error_response
+            
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Generación de Reporte Financiero",
+            ip_address=_ip(request),
+            descripcion=format_description({"rango_fechas": data['rango_fechas'], "formato": formato})
+        )
+        # --- FIN CORRECCIÓN ---
 
         if formato == 'pdf':
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = f'attachment; filename="reporte_financiero_{data["rango_fechas"]["inicio"]}_a_{data["rango_fechas"]["fin"]}.pdf"'
             
-            # Llamamos a la función que genera el PDF
             return generar_reporte_financiero_pdf(response, data)
         
-        # Por defecto, devolvemos JSON
         return Response(data, status=status.HTTP_200_OK)
     
 
 
 class ReporteUsoAreasComunesView(APIView):
-    """
-    Genera un reporte con estadísticas de uso de las áreas comunes
-    dentro de un rango de fechas.
-    """
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request, *args, **kwargs):
-        # 1. Obtener el rango de fechas de los query params
+        # ... (lógica sin cambios) ...
         try:
             fecha_fin_str = request.query_params.get('fecha_fin', date.today().isoformat())
             fecha_fin = date.fromisoformat(fecha_fin_str)
@@ -644,20 +775,16 @@ class ReporteUsoAreasComunesView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Realizar la consulta y agregación de datos
-        # Filtramos las reservas pagadas dentro del rango de fechas
         reservas_en_rango = Reserva.objects.filter(
             fecha_reserva__range=[fecha_inicio, fecha_fin],
             pagada=True
         )
 
-        # Calculamos la duración de cada reserva en horas
         duracion_horas = ExpressionWrapper(
             (F('hora_fin') - F('hora_inicio')),
             output_field=fields.DurationField()
         )
 
-        # Agrupamos por área común y calculamos las estadísticas
         estadisticas = (
             reservas_en_rango
             .annotate(nombre_area=F('area_comun__nombre'))
@@ -670,10 +797,8 @@ class ReporteUsoAreasComunesView(APIView):
             .order_by('-cantidad_reservas')
         )
 
-        # 3. Formatear la respuesta para que sea más legible
         reporte_data = []
         for item in estadisticas:
-            # La duración viene como un objeto timedelta, lo convertimos a horas
             total_segundos = item['total_horas_reservadas'].total_seconds() if item['total_horas_reservadas'] else 0
             horas = round(total_segundos / 3600, 2)
 
@@ -684,7 +809,6 @@ class ReporteUsoAreasComunesView(APIView):
                 "ingresos_generados": item['ingresos_generados'] or 0
             })
 
-        # 4. Construir la respuesta final
         data = {
             'rango_fechas': {
                 'inicio': fecha_inicio.isoformat(),
@@ -692,5 +816,14 @@ class ReporteUsoAreasComunesView(APIView):
             },
             'reporte': reporte_data
         }
+
+        # --- CORRECCIÓN DE AUDITORÍA ---
+        registrar_evento(
+            usuario=request.user,
+            accion="Consulta de Reporte de Uso de Áreas Comunes",
+            ip_address=_ip(request),
+            descripcion=format_description({"rango_fechas": data['rango_fechas']})
+        )
+        # --- FIN CORRECCIÓN ---
 
         return Response(data, status=status.HTTP_200_OK)

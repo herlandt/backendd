@@ -2,13 +2,14 @@
 
 import requests
 from django.conf import settings
-from .models import Pago, Gasto # Asegúrate que Gasto esté importado
-from condominio.models import Propiedad # <-- ¡AÑADE ESTA LÍNEA!
+from .models import Pago, Gasto 
+from condominio.models import Propiedad
 from django.utils import timezone
 from datetime import timedelta
 import uuid
 
-# ... (el resto de tu código de services.py se mantiene igual)
+# ¡Esta es la importación correcta!
+from auditoria.services import registrar_evento
 
 def iniciar_pago_qr(pago_id):
     """
@@ -83,14 +84,12 @@ def es_residente_moroso(usuario, meses_limite=None):
 
     return query.exists()
 
-# En finanzas/services.py
-
 def simular_pago_qr(pago_id):
     """
     Simula la generación y confirmación de un pago QR.
     """
     try:
-        pago = Pago.objects.get(id=pago_id)
+        pago = Pago.objects.select_related('usuario').get(id=pago_id)
     except Pago.DoesNotExist:
         return {"error": "El pago no existe."}
 
@@ -100,8 +99,18 @@ def simular_pago_qr(pago_id):
     pago.fecha_pago = timezone.now()
     pago.save()
 
-    # Lógica para notificar al usuario
-    # from notificaciones.services import enviar_notificacion_a_usuario
-    # enviar_notificacion_a_usuario(pago.usuario, "Pago Recibido", f"Tu pago de ${pago.monto_pagado} ha sido procesado.")
+    # --- Auditoría ---
+    registrar_evento(
+        usuario=pago.usuario,
+        ip="127.0.0.1", # IP del servidor, ya que es un proceso interno
+        accion="Confirmación de Pago (Simulado)",
+        extra_data={
+            "pago_id": pago.id,
+            "id_transaccion_simulada": pago.id_transaccion_pasarela,
+            "monto": str(pago.monto_pagado),
+            "realizado_por": "Sistema (Simulación)",
+        }
+    )
+    # --- Fin Auditoría ---
     
     return {"mensaje": "Pago simulado y confirmado exitosamente."}
