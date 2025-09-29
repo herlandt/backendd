@@ -3,7 +3,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView,RegistrarRostroView
+from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView,RegistrarRostroView,PerfilUsuarioView  
 
 router = DefaultRouter()
 router.register("residentes", ResidenteViewSet, basename="residente")
@@ -22,4 +22,7 @@ urlpatterns = [
     # --- NUEVA RUTA PARA REGISTRO FACIAL ---
    path("reconocimiento/registrar-rostro/", RegistrarRostroView.as_view(), name="registrar-rostro"),
   
+
+    path('perfil/', PerfilUsuarioView.as_view(), name='user-profile'),
+    path('', include(router.urls)),
 ]

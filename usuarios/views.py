@@ -303,6 +303,20 @@ class RegistrarRostroView(APIView):
         
 
 
+from .serializers import ResidenteReadSerializer # Asegúrate que esta importación esté
+from .models import Residente
+from rest_framework.permissions import IsAuthenticated
+
+class PerfilUsuarioView(generics.RetrieveAPIView):
+    """
+    Devuelve el perfil de residente del usuario autenticado.
+    """
+    serializer_class = ResidenteReadSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        # Busca el perfil de Residente asociado al usuario que hace la petición
+        return Residente.objects.get(usuario=self.request.user)
 # seguridad/views.py
 
 # ... (tus otras vistas) ...
