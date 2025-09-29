@@ -1,0 +1,28 @@
+services:
+  # Base de Datos PostgreSQL
+  - type: psql
+    name: condominio-db
+    databaseName: condominio_db
+    plan: free # El plan gratuito
+    region: ohio # Puedes elegir la región más cercana
+
+  # El Backend de Django (Web Service)
+  - type: web
+    name: smart-condominium-backend
+    env: python
+    plan: free # El plan gratuito
+    region: ohio
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application"
+    healthCheckPath: /api/schema/ # Una ruta que sabes que debe funcionar
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: condominio-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true # Render generará una clave secreta segura por ti
+      - key: PYTHON_VERSION
+        value: 3.11 # Asegúrate que coincida con tu versión
+      - key: DEBUG
+        value: False
