@@ -6,7 +6,7 @@ import os
 import time
 
 # --- CONFIGURACIÓN ---
-API_URL = 'http://127.0.0.1:8000/api/seguridad/ia/verificar-rostro/'
+API_URL = 'https://smart-condominium-backend-cg7l.onrender.com/api/seguridad/ia/verificar-rostro/'
 API_KEY = "MI_CLAVE_SUPER_SECRETA_12345" # La misma clave que usamos para las matrículas
 LAST_REQUEST_TIME = 0
 REQUEST_COOLDOWN = 5 # Segundos de espera entre peticiones para no saturar

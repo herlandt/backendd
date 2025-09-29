@@ -37,7 +37,7 @@ from .serializers import (
     ResidenteWriteSerializer,
     RegistroSerializer,
 )
-
+from rest_framework.permissions import AllowAny
 from notificaciones.services import notificar_usuario # <-- Servicio para enviar notificaciones
 from usuarios.models import User 
 # ---------------------------
@@ -122,12 +122,18 @@ class LoginView(ObtainAuthToken):
         403: OpenApiResponse(description="Prohibido"),
     },
 )
-class RegistroView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = RegistroSerializer
-    permission_classes = [permissions.IsAdminUser]
 
 
+class RegistroView(APIView):
+    # --- Y AÑADE ESTA LÍNEA ---
+    permission_classes = [AllowAny] 
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 # ---------------------------
 # Dispositivos - Registrar token FCM/APNS/Web
 # ---------------------------
