@@ -205,6 +205,12 @@ class Ingreso(models.Model):
 
 
 # ========= SIGNALS PARA INGRESOS AUTOMÁTICOS =========
+# en finanzas/models.py
+
+# ... (todo tu código anterior se mantiene igual) ...
+
+
+# ========= SIGNALS PARA INGRESOS AUTOMÁTICOS (VERSIÓN FINAL) =========
 
 @receiver(post_save, sender=Pago)
 def crear_ingreso_desde_pago(sender, instance, created, **kwargs):
@@ -216,15 +222,16 @@ def crear_ingreso_desde_pago(sender, instance, created, **kwargs):
         if instance.gasto:
             concepto = f"Pago de expensa: {instance.gasto.descripcion}"
         elif instance.multa:
-            concepto = f"Pago de multa: {instance.multa.motivo}"
+            # Asumiendo que el modelo Multa tiene un campo 'motivo' o 'concepto'
+            concepto = f"Pago de multa: {getattr(instance.multa, 'motivo', instance.multa.concepto)}"
         elif instance.reserva:
             concepto = f"Pago de reserva: {instance.reserva.area_comun.nombre}"
 
         Ingreso.objects.get_or_create(
             pago_relacionado=instance,
             defaults={
-                'fecha': instance.fecha_pago.date(),
-                'monto': instance.monto,
+                'fecha': instance.fecha_pago,
+                'monto': instance.monto_pagado,  # <--- ¡CORREGIDO! (con guion bajo)
                 'concepto': concepto,
                 'descripcion': f"Ingreso automático generado desde el pago ID {instance.id}"
             }
