@@ -26,7 +26,8 @@ INSTALLED_APPS = [
     'finanzas',
     'seguridad',
     'mantenimiento',
-
+    
+    'auditoria.apps.AuditoriaConfig',  # Asegúrate de usar la configuración correcta
     # Terceros
     'rest_framework',
     'rest_framework.authtoken',
@@ -45,6 +46,8 @@ NOTIF_FAKE_SEND = True
 CAMARA_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
+    
+    'auditoria.middleware.IPMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # bien aquí
     'django.contrib.sessions.middleware.SessionMiddleware',

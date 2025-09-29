@@ -26,7 +26,11 @@ from .serializers import (
 )
 from .services import simular_pago_qr
 
+from auditoria.services import registrar_evento
 
+def _ip(request):
+    # Usa la IP del middleware si existe; si no, REMOTE_ADDR como fallback.
+    return getattr(request, "ip_address", request.META.get("REMOTE_ADDR"))
 
 # =========================
 #        GASTOS
@@ -110,6 +114,7 @@ class GastoViewSet(viewsets.ModelViewSet):
                 monto_pagado=monto,
             )
             gasto.pagado = True
+            
             gasto.save(update_fields=['pagado'])
 
         return Response(PagoSerializer(pago).data, status=status.HTTP_201_CREATED)
