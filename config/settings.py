@@ -4,6 +4,8 @@ Django settings for config project.
 
 from pathlib import Path
 import dj_database_url
+import os
+from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Seguridad / Debug (ojo en producción) ---
@@ -50,7 +52,7 @@ CAMARA_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'auditoria.middleware.IPMiddleware', 
-      'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # bien aquí
     'django.contrib.sessions.middleware.SessionMiddleware',
