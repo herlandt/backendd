@@ -22,6 +22,9 @@ urlpatterns = [
     path('api/login/', obtain_auth_token, name='api_token_auth'),
     path('api/registro/', RegistroView.as_view(), name='api_registro'),
     path('api/dispositivos/registrar/', RegistrarDispositivoView.as_view(), name='registrar_dispositivo'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 
     # Endpoints de cada app con su propio prefijo
     path('api/usuarios/', include('usuarios.urls')),
