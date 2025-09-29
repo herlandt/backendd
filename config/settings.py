@@ -1,5 +1,5 @@
 """
-Django settings for config project.
+Django settings for config project.fig
 """
 
 from pathlib import Path
@@ -87,12 +87,8 @@ import dj_database_url
 
 # ...
 DATABASES = {
-    'default': dj_database_url.config(
-        default=config('DATABASE_URL'),
-        conn_max_age=600
-    )
+    'default': dj_database_url.config(conn_max_age=600)
 }
-
 # --- Validadores de password ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
