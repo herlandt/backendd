@@ -102,14 +102,23 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- CORS ---
 # --- CORS ---
+# --- CORS ---
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000", # Para tu desarrollo local
 ]
 
-# Añadir el host de Render a los orígenes permitidos si existe
+# --- CSRF ---
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
+
+
+# Añadir el host de Render a las listas de confianza si existe
 RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL')
 if RENDER_EXTERNAL_URL:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME) # Este ya lo tenías
     CORS_ALLOWED_ORIGINS.append(RENDER_EXTERNAL_URL)
+    CSRF_TRUSTED_ORIGINS.append(RENDER_EXTERNAL_URL)
 # Si usas cookies de sesión desde el front:
 # CORS_ALLOW_CREDENTIALS = True
 # O para puertos dinámicos:
