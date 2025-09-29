@@ -3,7 +3,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView,RegistrarRostroView,PerfilUsuarioView  
+from .views import ResidenteViewSet, RegistroView, RegistrarDispositivoView, LoginView,RegistrarRostroView,PerfilUsuarioView,CrearAdminView    
 
 router = DefaultRouter()
 router.register("residentes", ResidenteViewSet, basename="residente")
@@ -25,4 +25,5 @@ urlpatterns = [
 
     path('perfil/', PerfilUsuarioView.as_view(), name='user-profile'),
     path('', include(router.urls)),
+  path("setup/crear-primer-admin/", CrearAdminView.as_view(), name="crear-admin"),
 ]

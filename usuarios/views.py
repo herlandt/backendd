@@ -322,3 +322,37 @@ class PerfilUsuarioView(generics.RetrieveAPIView):
 # ... (tus otras vistas) ...
 
 # ========= VISTA PARA VERIFICACIÓN FACIAL EN TIEMPO REAL =========
+
+class CrearAdminView(APIView):
+    """
+    Endpoint TEMPORAL y de un solo uso para crear el primer superusuario.
+    ¡¡¡ELIMINAR DESPUÉS DE USAR!!!
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        # Comprueba si ya existe un superusuario para evitar crear más.
+        if User.objects.filter(is_superuser=True).exists():
+            return Response(
+                {"error": "Ya existe un administrador. Este endpoint ha sido desactivado."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if not username or not password:
+            return Response(
+                {"error": "Se requiere 'username' y 'password'."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Crea el superusuario
+            User.objects.create_superuser(username=username, password=password)
+            return Response(
+                {"mensaje": f"Superusuario '{username}' creado exitosamente. Por favor, elimina este endpoint ahora."},
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
