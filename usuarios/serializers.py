@@ -24,31 +24,56 @@ class ResidenteReadSerializer(serializers.ModelSerializer):
 
 # --- SERIALIZADOR PARA ESCRIBIR DATOS (POST / PUT) ---
 
+# En usuarios/serializers.py
+
+# ... (otras importaciones)
+
 class ResidenteWriteSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=150)
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    propiedad_id = serializers.IntegerField()
-    rol = serializers.ChoiceField(choices=Residente.ROL_CHOICES)
+    # --- MODIFICACIÓN 1: Añadir usuario_id y hacer los otros campos opcionales ---
+    usuario_id = serializers.IntegerField(required=False)
+    username = serializers.CharField(max_length=150, required=False)
+    email = serializers.EmailField(required=False)
+    password = serializers.CharField(write_only=True, required=False)
+    propiedad_id = serializers.IntegerField() # Este sigue siendo requerido
+    rol = serializers.ChoiceField(choices=Residente.ROL_CHOICES) # Y este también
+
+    def validate(self, data):
+        """
+        Valida que se proporcione 'usuario_id' o 'username' y 'email', pero no ambos.
+        """
+        if 'usuario_id' in data and ('username' in data or 'email' in data):
+            raise serializers.ValidationError("Proporciona 'usuario_id' o los datos del nuevo usuario ('username'/'email'), pero no ambos.")
+        if 'usuario_id' not in data and ('username' not in data or 'email' not in data):
+            raise serializers.ValidationError("Debes proporcionar un 'usuario_id' existente o 'username' y 'email' para un nuevo usuario.")
+        return data
 
     def validate_username(self, value):
-        if self.instance:
-            if User.objects.filter(username=value).exclude(pk=self.instance.usuario.pk).exists():
-                raise serializers.ValidationError("Este nombre de usuario ya está en uso por otro residente.")
-        elif User.objects.filter(username=value).exists():
-             raise serializers.ValidationError("Este nombre de usuario ya existe.")
+        # Esta validación solo se aplica si no estamos actualizando
+        if not self.instance and User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Ya existe un usuario con este nombre.")
         return value
 
     def create(self, validated_data):
         """
-        Lógica para CREAR un nuevo Residente y su Usuario.
-        --- ¡CORRECCIÓN AQUÍ! ---
+        --- MODIFICACIÓN 2: Lógica para manejar usuario existente o crear uno nuevo ---
         """
-        user = User.objects.create_user(
-            username=validated_data['username'],
-            email=validated_data['email'],
-            password=validated_data.get('password')
-        )
+        user = None
+        # CASO 1: Se proporciona el ID de un usuario existente
+        if 'usuario_id' in validated_data:
+            try:
+                user = User.objects.get(pk=validated_data['usuario_id'])
+            except User.DoesNotExist:
+                raise serializers.ValidationError({"usuario_id": "No se encontró un usuario con este ID."})
+        
+        # CASO 2: Se crea un usuario nuevo
+        else:
+            user = User.objects.create_user(
+                username=validated_data['username'],
+                email=validated_data['email'],
+                password=validated_data.get('password') or User.objects.make_random_password()
+            )
+
+        # Finalmente, crea el perfil de Residente y lo asocia
         residente = Residente.objects.create(
             usuario=user,
             propiedad_id=validated_data['propiedad_id'],
@@ -57,7 +82,7 @@ class ResidenteWriteSerializer(serializers.Serializer):
         return residente
 
     def update(self, instance, validated_data):
-        """Lógica para ACTUALIZAR un Residente y su Usuario."""
+        # Esta función de actualizar la dejamos como estaba
         user = instance.usuario
         user.username = validated_data.get('username', user.username)
         user.email = validated_data.get('email', user.email)
@@ -74,21 +99,25 @@ class ResidenteWriteSerializer(serializers.Serializer):
         return instance
 
     def to_representation(self, instance):
-        """Define cómo se debe mostrar el objeto después de crearlo o actualizarlo."""
-        return {
+        # Esta función también la dejamos como estaba
+        representation = {
             'id': instance.id,
             'rol': instance.rol,
             'usuario': {
                 'id': instance.usuario.id,
                 'username': instance.usuario.username,
                 'email': instance.usuario.email
-            },
-            'propiedad': {
+            }
+        }
+        if instance.propiedad:
+             representation['propiedad'] = {
                 'id': instance.propiedad.id,
                 'numero_casa': instance.propiedad.numero_casa
             }
-        }
-
+        else:
+            representation['propiedad'] = None
+            
+        return representation
 # Serializador necesario para otras vistas que puedas tener
 class RegistroSerializer(serializers.ModelSerializer):
     class Meta:
