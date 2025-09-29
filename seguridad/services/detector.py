@@ -102,3 +102,80 @@ def run_detector(camera: Camera, fps=1, min_similarity=90.0, store_frames=True):
     finally:
         print("-> Cerrando stream de video.")
         cap.release()
+
+
+
+# Al final de seguridad/services/detector.py
+from .rekog import detect_text # <-- Añade esta importación al inicio del archivo
+from seguridad.models import EventoSeguridad, Vehiculo # <-- Añade esta importación también
+
+# ... (el resto de las funciones existentes) ...
+
+def run_plate_detector(camera: Camera, fps=1):
+    """
+    Bucle que toma N frames por segundo de una cámara y busca matrículas de vehículos.
+    """
+    cap = cv2.VideoCapture(camera.rtsp_url, cv2.CAP_FFMPG)
+    if not cap.isOpened():
+        print(f"ERROR: No se pudo abrir el stream RTSP: {camera.rtsp_url}")
+        return
+
+    print(f"-> Vigilando matrículas en la cámara: {camera.name} ({camera.rtsp_url})")
+    interval = 1.0 / max(fps, 0.1)
+
+    last_detected_plate = None
+    last_detected_time = 0
+
+    try:
+        while camera.active:
+            t0 = time.time()
+            ok, frame = cap.read()
+            if not ok or frame is None:
+                time.sleep(0.5)
+                continue
+
+            jpg_data = _encode_jpeg(frame)
+            if not jpg_data:
+                continue
+
+            # Detectar texto en el frame
+            text_detections = detect_text(jpg_data)
+
+            # Filtrar solo las matrículas (simplificado para placas de Bolivia: 1234ABC)
+            for detection in text_detections:
+                plate = detection.get("DetectedText", "").replace(" ", "").upper()
+                # Lógica simple para evitar procesar la misma matrícula repetidamente
+                if len(plate) > 4 and detection.get("Type") == "LINE":
+                    if plate == last_detected_plate and (time.time() - last_detected_time) < 10:
+                        continue
+
+                    print(f"-> Matrícula detectada: {plate}")
+                    last_detected_plate = plate
+                    last_detected_time = time.time()
+
+                    # Verificar si el vehículo está autorizado
+                    vehiculo_autorizado = Vehiculo.objects.filter(placa=plate).first()
+
+                    if vehiculo_autorizado:
+                        print(f"  - ✅ Vehículo AUTORIZADO (Propiedad: {vehiculo_autorizado.propiedad})")
+                        EventoSeguridad.objects.create(
+                            tipo_evento=EventoSeguridad.ACCESO_VEHICULAR,
+                            placa=plate,
+                            autorizado=True,
+                            motivo="Vehículo registrado"
+                        )
+                    else:
+                        print(f"  - ❌ Vehículo DENEGADO")
+                        EventoSeguridad.objects.create(
+                            tipo_evento=EventoSeguridad.ACCESO_VEHICULAR,
+                            placa=plate,
+                            autorizado=False,
+                            motivo="Vehículo no registrado"
+                        )
+                    # Aquí se podría añadir la lógica para enviar notificaciones push
+
+            elapsed = time.time() - t0
+            time.sleep(max(0, interval - elapsed))
+    finally:
+        print("-> Cerrando stream de cámara de matrículas.")
+        cap.release()

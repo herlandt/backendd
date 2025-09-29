@@ -20,3 +20,15 @@ def search_known_face(image_bytes: bytes, threshold=90.0, max_faces=1):
 def detect_faces(image_bytes: bytes):
     """Solo detección (sin identificar)."""
     return rekog.detect_faces(Image={"Bytes": image_bytes}, Attributes=["DEFAULT"])
+
+
+# Al final de seguridad/services/rekog.py
+
+def detect_text(jpg_bytes):
+    """
+    Detecta texto en una imagen usando AWS Rekognition.
+    """
+    resp = rekog.detect_text(
+        Image={'Bytes': jpg_bytes}
+    )
+    return resp.get("TextDetections", [])
