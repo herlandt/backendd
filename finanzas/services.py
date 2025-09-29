@@ -1,6 +1,14 @@
+# en finanzas/services.py
+
 import requests
 from django.conf import settings
-from .models import Pago
+from .models import Pago, Gasto # Asegúrate que Gasto esté importado
+from condominio.models import Propiedad # <-- ¡AÑADE ESTA LÍNEA!
+from django.utils import timezone
+from datetime import timedelta
+import uuid
+
+# ... (el resto de tu código de services.py se mantiene igual)
 
 def iniciar_pago_qr(pago_id):
     """

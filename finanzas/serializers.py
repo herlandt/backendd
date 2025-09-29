@@ -68,10 +68,22 @@ class PagoMultaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pago
         fields = '__all__'
+# en finanzas/serializers.py
+
+# ... (otras importaciones) ...
+
 class PagoSerializer(serializers.ModelSerializer):
+    # Añade este campo para que el usuario se muestre pero no se requiera al crear
+    usuario = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Pago
-        fields = '__all__'
+        # Especificamos los campos para asegurar que 'usuario' use nuestra definición
+        fields = [
+            'id', 'gasto', 'multa', 'reserva', 'usuario', 
+            'monto_pagado', 'fecha_pago', 'comprobante', 
+            'estado_pago', 'id_transaccion_pasarela', 'qr_data'
+        ]
 
 class MultaSerializer(serializers.ModelSerializer):
     class Meta:

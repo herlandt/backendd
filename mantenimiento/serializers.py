@@ -51,6 +51,5 @@ class SolicitudMantenimientoSerializer(serializers.ModelSerializer):
         read_only_fields = ["fecha_creacion", "fecha_actualizacion", "solicitado_por"]
 
     def create(self, validated_data):
-        # el usuario viene del request
-        user = self.context["request"].user
-        return SolicitudMantenimiento.objects.create(solicitado_por=user, **validated_data)
+       
+        return SolicitudMantenimiento.objects.create(**validated_data)

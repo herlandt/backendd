@@ -44,3 +44,15 @@ class DeteccionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Deteccion
         fields = ["id","camera","matched_username","similarity","face_id","ts","frame","raw"]
+
+# al final de seguridad/serializers.py
+
+from .models import EventoSeguridad # Asegúrate de importar el modelo
+
+# ... tus otros serializadores (VisitanteSerializer, VehiculoSerializer, etc.)
+
+# --- AÑADE ESTA CLASE ---
+class EventoSeguridadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EventoSeguridad
+        fields = '__all__'

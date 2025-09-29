@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from condominio.models import Propiedad, AreaComun
 from django.db.models.signals import post_save
+from django.db.models import Sum
 from django.dispatch import receiver
 User = get_user_model()
 
@@ -76,7 +77,10 @@ class Reserva(models.Model):
 #    Definimos Pago y PagoMulta al final.
 # ===================================================================
 
+
+
 class Pago(models.Model):
+    # ... (todos tus campos existentes)
     gasto = models.ForeignKey(Gasto, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
     multa = models.ForeignKey(Multa, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
     reserva = models.ForeignKey(Reserva, on_delete=models.CASCADE, related_name='pagos', null=True, blank=True)
@@ -96,7 +100,9 @@ class Pago(models.Model):
     id_transaccion_pasarela = models.CharField(max_length=255, blank=True, null=True, unique=True)
     qr_data = models.TextField(blank=True, null=True)
 
+
     def __str__(self):
+        # ... (tu método __str__)
         if self.gasto:
             return f"Pago {self.monto_pagado} de {self.gasto}"
         elif self.multa:
@@ -104,6 +110,20 @@ class Pago(models.Model):
         elif self.reserva:
             return f"Pago {self.monto_pagado} de {self.reserva}"
         return f"Pago {self.id} por {self.monto_pagado}"
+
+    # --- AÑADE ESTE MÉTODO ---
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs) # Guarda el pago primero
+        # Ahora, actualiza el estado del gasto asociado
+        if self.gasto:
+            total_pagado = self.gasto.pagos.aggregate(total=Sum('monto_pagado'))['total'] or 0
+            if total_pagado >= self.gasto.monto:
+                self.gasto.pagado = True
+            else:
+                self.gasto.pagado = False
+            self.gasto.save()
+
+# ... (el resto de tus modelos)
 
 
 class PagoMulta(models.Model):
