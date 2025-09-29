@@ -87,7 +87,10 @@ import dj_database_url
 
 # ...
 DATABASES = {
-    'default': dj_database_url.config(conn_max_age=600)
+    'default': dj_database_url.config(
+        default='sqlite:///db.sqlite3', # <- Base de datos falsa si no hay DATABASE_URL
+        conn_max_age=600
+    )
 }
 # --- Validadores de password ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -98,9 +101,15 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- CORS ---
+# --- CORS ---
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
+    "http://localhost:3000", # Para tu desarrollo local
 ]
+
+# Añadir el host de Render a los orígenes permitidos si existe
+RENDER_EXTERNAL_URL = os.environ.get('RENDER_EXTERNAL_URL')
+if RENDER_EXTERNAL_URL:
+    CORS_ALLOWED_ORIGINS.append(RENDER_EXTERNAL_URL)
 # Si usas cookies de sesión desde el front:
 # CORS_ALLOW_CREDENTIALS = True
 # O para puertos dinámicos:
