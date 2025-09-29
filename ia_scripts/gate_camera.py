@@ -7,7 +7,7 @@ import boto3
 
 # --- CONFIGURACIÓN ---
 VIDEO_PATH = 'test_video.mp4'
-API_URL = 'http://127.0.0.1:8000/api/seguridad/ia/control-vehicular/'
+API_URL = 'http://condomio.us-east-1.elasticbeanstalk.com/api/seguridad/ia/control-vehicular/'
 API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
 PROCESSED_PLATES = set()
 

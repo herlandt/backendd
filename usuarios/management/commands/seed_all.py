@@ -71,14 +71,17 @@ class Command(BaseCommand):
         ) for _ in range(4)]
 
         self.stdout.write('Creando propietarios, residentes y propiedades...')
+        residentes_creados = []
         for i in range(10):
             propietario_user = User.objects.create_user(username=f'propietario{i+1}', password='password123', first_name=fake.first_name(), last_name=fake.last_name(), email=fake.email())
             propiedad = Propiedad.objects.create(numero_casa=f'C-{100+i}', propietario=propietario_user, metros_cuadrados=random.uniform(80.0, 250.0))
-            Residente.objects.create(usuario=propietario_user, propiedad=propiedad)
+            residente = Residente.objects.create(usuario=propietario_user, propiedad=propiedad)
+            residentes_creados.append(residente)
             
             if i % 2 == 0:
                 inquilino_user = User.objects.create_user(username=f'inquilino{i+1}', password='password123', first_name=fake.first_name(), last_name=fake.last_name(), email=fake.email())
-                Residente.objects.create(usuario=inquilino_user, propiedad=propiedad)
+                residente_inquilino = Residente.objects.create(usuario=inquilino_user, propiedad=propiedad)
+                residentes_creados.append(residente_inquilino)
         
         self.stdout.write('Creando gastos, multas y pagos...')
         propiedades = Propiedad.objects.all()
@@ -113,32 +116,34 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write('Creando visitas y visitantes...')
-        residentes = Residente.objects.all()
         for _ in range(15):
-            residente_anfitrion = random.choice(residentes)
+            residente_anfitrion = random.choice(residentes_creados)
             visitante = Visitante.objects.create(
                 nombre_completo=f"{fake.first_name()} {fake.last_name()}",
                 documento=fake.ssn()
             )
-            # --- CORRECCIÓN FINAL Y DEFINITIVA ---
+            
+            # --- CORRECCIÓN FINAL (AHORA SÍ) ---
+            fecha_programada = datetime.now() + timedelta(days=random.randint(-2, 2))
             Visita.objects.create(
-                residente=residente_anfitrion,  # Se cambió 'residente_autoriza' por 'residente'
                 visitante=visitante,
-                fecha_hora_entrada=datetime.now() - timedelta(hours=random.randint(1, 10)), # Se cambió a 'fecha_hora_entrada'
-                comentario=random.choice(['Reunión social', 'Entrega', 'Visita familiar']) # Se cambió 'motivo' por 'comentario'
+                propiedad=residente_anfitrion.propiedad, # La visita es a la propiedad
+                fecha_ingreso_programado=fecha_programada,
+                fecha_salida_programada=fecha_programada + timedelta(hours=3),
+                ingreso_real=fecha_programada - timedelta(minutes=random.randint(5, 30)) # El visitante llegó un poco antes
             )
             # --- FIN CORRECCIÓN ---
 
         self.stdout.write('Creando solicitudes de mantenimiento...')
         for _ in range(5):
-            solicitante = random.choice(residentes)
+            solicitante = random.choice(residentes_creados)
             solicitud = SolicitudMantenimiento.objects.create(
                 propiedad=solicitante.propiedad,
                 solicitado_por=solicitante.usuario,
                 titulo=f'Problema con {random.choice(["tubería", "luz", "puerta"])}',
                 descripcion=f'Revisar {random.choice(["fuga", "cortocircuito", "cerradura"])} en el área de la cocina.',
-                estado=random.choice(['Pendiente', 'En Proceso', 'Completada'])
+                estado=random.choice(['PENDIENTE', 'EN_PROGRESO', 'FINALIZADA'])
             )
-            if solicitud.estado != 'Pendiente':
+            if solicitud.estado != 'PENDIENTE':
                 solicitud.asignado_a = random.choice(personal_mantenimiento)
                 solicitud.save()

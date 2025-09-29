@@ -3,14 +3,16 @@ Django settings for config project.
 """
 
 from pathlib import Path
-
+import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- Seguridad / Debug (ojo en producción) ---
 SECRET_KEY = 'django-insecure-_add0b!8@6c@+*uvhp!mf@=#09m=mzsauiv_c$&35pfs$!t0(!'
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = ['10.0.2.2', 'localhost', '127.0.0.1', '192.168.0.18']
-
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 # --- Apps ---
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -46,7 +48,7 @@ NOTIF_FAKE_SEND = True
 CAMARA_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
-    
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'auditoria.middleware.IPMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # bien aquí
@@ -80,15 +82,12 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # --- Base de datos ---
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'condominio_db',
-        'USER': 'postgres',
-        'PASSWORD': '12345678',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
+    'default': dj_database_url.config(
+        default='postgresql://postgres:postgres@localhost:5432/condominio_db', # Tu BD local
+        conn_max_age=600
+    )
 }
+
 
 # --- Validadores de password ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -120,8 +119,8 @@ PAGOSNET_EMAIL = 'tu_email_de_comercio@empresa.com'
 PAGOSNET_PASSWORD = 'tu_password_de_comercio'
 # --- Static ---
 STATIC_URL = 'static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --- DRF ---
