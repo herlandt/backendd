@@ -1,6 +1,6 @@
 services:
   # Base de Datos PostgreSQL
-  - type: psql
+  - type: postgres 
     name: condominio-db
     databaseName: condominio_db
     plan: free # El plan gratuito
