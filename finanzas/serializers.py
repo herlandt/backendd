@@ -1,5 +1,6 @@
 import requests
 from django.conf import settings
+from django.db import models
 from .models import Pago
 from rest_framework import serializers
 from .models import Gasto, Pago, Multa
@@ -85,6 +86,75 @@ class PagoSerializer(serializers.ModelSerializer):
             'estado_pago', 'id_transaccion_pasarela', 'qr_data'
         ]
 
+    def validate_monto_pagado(self, value):
+        """
+        Valida que el monto del pago sea positivo y no exceda el saldo pendiente
+        """
+        if value <= 0:
+            raise serializers.ValidationError("El monto del pago debe ser mayor a cero.")
+        
+        # Si estamos actualizando un pago existente, no validamos contra el saldo
+        if self.instance:
+            return value
+        
+        # Validar contra el saldo pendiente para nuevos pagos
+        gasto = self.initial_data.get('gasto')
+        multa = self.initial_data.get('multa')
+        reserva = self.initial_data.get('reserva')
+        
+        saldo_pendiente = 0
+        
+        if gasto:
+            try:
+                gasto_obj = Gasto.objects.get(id=gasto)
+                pagos_previos = Pago.objects.filter(gasto=gasto_obj).aggregate(
+                    total=models.Sum('monto_pagado')
+                )['total'] or 0
+                saldo_pendiente = gasto_obj.monto - pagos_previos
+            except Gasto.DoesNotExist:
+                raise serializers.ValidationError("El gasto especificado no existe.")
+                
+        elif multa:
+            try:
+                multa_obj = Multa.objects.get(id=multa)
+                pagos_previos = Pago.objects.filter(multa=multa_obj).aggregate(
+                    total=models.Sum('monto_pagado')
+                )['total'] or 0
+                saldo_pendiente = multa_obj.monto - pagos_previos
+            except Multa.DoesNotExist:
+                raise serializers.ValidationError("La multa especificada no existe.")
+                
+        elif reserva:
+            try:
+                reserva_obj = Reserva.objects.get(id=reserva)
+                pagos_previos = Pago.objects.filter(reserva=reserva_obj).aggregate(
+                    total=models.Sum('monto_pagado')
+                )['total'] or 0
+                saldo_pendiente = reserva_obj.costo_total - pagos_previos
+            except Reserva.DoesNotExist:
+                raise serializers.ValidationError("La reserva especificada no existe.")
+        
+        if value > saldo_pendiente:
+            raise serializers.ValidationError(
+                f"El monto del pago (${value}) no puede exceder el saldo pendiente (${saldo_pendiente})."
+            )
+        
+        return value
+
+    def validate(self, data):
+        """
+        Validación a nivel de objeto: debe tener exactamente uno de gasto, multa o reserva
+        """
+        campos_pago = [data.get('gasto'), data.get('multa'), data.get('reserva')]
+        campos_no_nulos = [campo for campo in campos_pago if campo is not None]
+        
+        if len(campos_no_nulos) != 1:
+            raise serializers.ValidationError(
+                "Debe especificar exactamente uno de: gasto, multa o reserva."
+            )
+        
+        return data
+
 class MultaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Multa
@@ -112,3 +182,24 @@ class IngresoSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'fecha', 'monto', 'concepto', 'descripcion', 'pago_relacionado'
         ]
+
+# Serializadores específicos para las vistas que causan problemas de documentación
+class GenerarExpensasRequestSerializer(serializers.Serializer):
+    """Serializer para la solicitud de generar expensas masivas"""
+    monto = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Monto de la expensa")
+    descripcion = serializers.CharField(max_length=255, help_text="Descripción de la expensa")
+    fecha_vencimiento = serializers.DateField(help_text="Fecha de vencimiento del pago")
+
+class GenerarExpensasResponseSerializer(serializers.Serializer):
+    """Serializer para la respuesta de generar expensas masivas"""
+    mensaje = serializers.CharField(help_text="Mensaje de confirmación")
+
+class EstadoDeCuentaResponseSerializer(serializers.Serializer):
+    """Serializer para la respuesta del estado de cuenta"""
+    id = serializers.IntegerField()
+    propiedad = serializers.IntegerField(required=False)
+    monto = serializers.DecimalField(max_digits=10, decimal_places=2)
+    descripcion = serializers.CharField()
+    fecha_emision = serializers.DateField(required=False)
+    fecha_vencimiento = serializers.DateField(required=False)
+    tipo_deuda = serializers.CharField(help_text="Tipo de deuda: gasto, multa o reserva")

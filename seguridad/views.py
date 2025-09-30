@@ -25,6 +25,7 @@ from .serializers import (
 )
 from .permissions import HasAPIKey
 from usuarios.models import Residente
+from usuarios.permissions import IsPropietario, IsPersonalSeguridad
 
 # --- Vistas de Control de Acceso y Personalizadas ---
 
@@ -237,21 +238,154 @@ class DeteccionListView(generics.ListAPIView):
 # --- ViewSets para el Router (CRUDs estándar) ---
 
 class VisitaViewSet(viewsets.ModelViewSet):
-    queryset = Visita.objects.all()
     serializer_class = VisitaSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'propiedad': ['exact'],
+        'visitante': ['exact'],
+        'fecha_ingreso_programado': ['gte', 'lte', 'exact'],
+        'fecha_salida_programada': ['gte', 'lte', 'exact'],
+        'ingreso_real': ['isnull'],
+        'salida_real': ['isnull'],
+        'estado': ['exact'],
+    }
+    search_fields = ['visitante__nombre', 'visitante__cedula', 'propiedad__numero']
+    ordering_fields = ['fecha_ingreso_programado', 'fecha_salida_programada', 'ingreso_real']
+    ordering = ['-fecha_ingreso_programado']
+
+    def get_queryset(self):
+        """
+        Filtra las visitas según el rol del usuario:
+        - PROPIETARIO: Ve todas las visitas del condominio
+        - SEGURIDAD: Ve todas las visitas (necesario para control de acceso)
+        - RESIDENTE: Solo ve visitas a propiedades donde es residente
+        """
+        user = self.request.user
+        
+        try:
+            if user.profile.role in ['PROPIETARIO', 'SEGURIDAD']:
+                # Propietarios y personal de seguridad ven todas las visitas
+                return Visita.objects.select_related('visitante', 'propiedad').all()
+            else:
+                # Residentes ven solo visitas a sus propiedades
+                from usuarios.models import Residente
+                try:
+                    residente = Residente.objects.get(usuario=user)
+                    if residente.propiedad:
+                        return Visita.objects.select_related('visitante', 'propiedad').filter(
+                            propiedad=residente.propiedad
+                        )
+                    else:
+                        return Visita.objects.none()
+                except Residente.DoesNotExist:
+                    return Visita.objects.none()
+        except:
+            return Visita.objects.none()
+
+    def get_permissions(self):
+        # Solo propietarios pueden crear, actualizar o eliminar visitas
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPropietario]
+        # Personal de seguridad y propietarios pueden ver visitas
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
 class VehiculoViewSet(viewsets.ModelViewSet):
-    queryset = Vehiculo.objects.all()
     serializer_class = VehiculoSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'placa': ['exact', 'icontains'],
+        'modelo': ['icontains'],
+        'color': ['exact', 'icontains'],
+        'propiedad': ['exact'],
+        'tipo': ['exact'],
+    }
+    search_fields = ['placa', 'modelo', 'color', 'propiedad__numero']
+    ordering_fields = ['placa', 'modelo', 'tipo']
+    ordering = ['placa']
+
+    def get_queryset(self):
+        """
+        Filtra los vehículos según el rol del usuario:
+        - PROPIETARIO: Ve todos los vehículos del condominio
+        - SEGURIDAD: Ve todos los vehículos (necesario para control de acceso)
+        - RESIDENTE: Solo ve vehículos de propiedades donde es residente
+        """
+        user = self.request.user
+        
+        try:
+            if user.profile.role in ['PROPIETARIO', 'SEGURIDAD']:
+                # Propietarios y personal de seguridad ven todos los vehículos
+                return Vehiculo.objects.select_related('propiedad').all()
+            else:
+                # Residentes ven solo vehículos de sus propiedades
+                from usuarios.models import Residente
+                try:
+                    residente = Residente.objects.get(usuario=user)
+                    if residente.propiedad:
+                        return Vehiculo.objects.select_related('propiedad').filter(
+                            propiedad=residente.propiedad
+                        )
+                    else:
+                        return Vehiculo.objects.none()
+                except Residente.DoesNotExist:
+                    return Vehiculo.objects.none()
+        except:
+            return Vehiculo.objects.none()
+
+    def get_permissions(self):
+        # Solo propietarios pueden crear, actualizar o eliminar vehículos
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPropietario]
+        # Personal de seguridad y propietarios pueden ver vehículos
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
 class VisitanteViewSet(viewsets.ModelViewSet):
     queryset = Visitante.objects.all()
     serializer_class = VisitanteSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'nombre': ['icontains'],
+        'cedula': ['exact'],
+        'telefono': ['exact', 'icontains'],
+    }
+    search_fields = ['nombre', 'cedula', 'telefono']
+    ordering_fields = ['nombre', 'cedula']
+    ordering = ['nombre']
+
+    def get_permissions(self):
+        # Solo propietarios pueden crear, actualizar o eliminar visitantes
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPropietario]
+        # Personal de seguridad y propietarios pueden ver visitantes
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
 class EventoSeguridadViewSet(viewsets.ModelViewSet):
     queryset = EventoSeguridad.objects.all()
     serializer_class = EventoSeguridadSerializer
+    # Filtros avanzados
+    filterset_fields = {
+        'tipo': ['exact'],
+        'fecha_hora': ['gte', 'lte', 'exact'],
+        'ubicacion': ['icontains'],
+        'gravedad': ['exact'],
+        'resuelto': ['exact'],
+    }
+    search_fields = ['tipo', 'descripcion', 'ubicacion']
+    ordering_fields = ['fecha_hora', 'gravedad', 'tipo']
+    ordering = ['-fecha_hora']
+
+    def get_permissions(self):
+        # Solo personal de seguridad puede crear, actualizar o eliminar eventos
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPersonalSeguridad]
+        # Cualquier usuario autenticado puede ver eventos de seguridad
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
     permission_classes = [IsAuthenticated]

@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from .models import Gasto, Pago
 from condominio.models import Propiedad
+from usuarios.models import UserProfile
 from datetime import date
 
 class FinanzasAPITests(APITestCase):
@@ -13,6 +14,13 @@ class FinanzasAPITests(APITestCase):
     def setUp(self):
         self.admin_user = User.objects.create_user(username='admin', password='password123', is_staff=True)
         self.propietario_user = User.objects.create_user(username='propietario', password='password123')
+        
+        # Actualizar directamente los UserProfiles creados por las señales
+        self.admin_user.profile.role = UserProfile.Role.PROPIETARIO
+        self.admin_user.profile.save()
+        
+        self.propietario_user.profile.role = UserProfile.Role.RESIDENTE
+        self.propietario_user.profile.save()
         
         self.propiedad = Propiedad.objects.create(
             numero_casa='B-201', 

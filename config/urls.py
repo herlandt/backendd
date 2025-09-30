@@ -14,9 +14,13 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from .api_views import APIWelcomeView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Vista de bienvenida de la API
+    path('api/', APIWelcomeView.as_view(), name='api_welcome'),
 
     # Autenticación y registro de usuarios (se quedan en la raíz de la API)
     path('api/login/', obtain_auth_token, name='api_token_auth'),
@@ -36,9 +40,6 @@ urlpatterns = [
 
     # URLs para la API navegable
     path('api-auth/', include('rest_framework.urls')),
-   path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("api/notificaciones/", include(("notificaciones.urls", "notificaciones"), namespace="notificaciones")),
 ]
 if settings.DEBUG:

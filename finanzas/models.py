@@ -1,10 +1,9 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from condominio.models import Propiedad, AreaComun
 from django.db.models.signals import post_save
 from django.db.models import Sum
 from django.dispatch import receiver
-User = get_user_model()
 
 # ===================================================================
 # 1. MODELOS PRINCIPALES (los que se pagan)
@@ -45,6 +44,7 @@ class Multa(models.Model):
     pagado = models.BooleanField(default=False)
     mes = models.PositiveSmallIntegerField()
     anio = models.PositiveIntegerField()
+    creado_por = models.ForeignKey(User, on_delete=models.PROTECT, related_name='multas_creadas', null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.fecha_emision and not self.mes:

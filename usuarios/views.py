@@ -59,6 +59,18 @@ class ResidenteViewSet(viewsets.ModelViewSet):
     """
     queryset = Residente.objects.all()
     permission_classes = [permissions.IsAdminUser]
+    # Filtros avanzados
+    filterset_fields = {
+        'propiedad': ['exact'],
+        'usuario': ['exact'],
+        'usuario__username': ['icontains'],
+        'usuario__email': ['icontains'],
+        'usuario__first_name': ['icontains'],
+        'usuario__last_name': ['icontains'],
+    }
+    search_fields = ['usuario__username', 'usuario__email', 'usuario__first_name', 'usuario__last_name', 'propiedad__numero']
+    ordering_fields = ['usuario__username', 'usuario__date_joined']
+    ordering = ['usuario__username']
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:

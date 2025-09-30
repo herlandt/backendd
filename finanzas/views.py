@@ -17,14 +17,20 @@ from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.openapi import OpenApiTypes
+from usuarios.permissions import IsPropietario
 from .reportes import generar_reporte_financiero_pdf
 from condominio.models import Propiedad
 from .models import Gasto, Pago, Multa, PagoMulta, Reserva, Egreso, Ingreso
 from .serializers import (
     GastoSerializer, PagoSerializer, MultaSerializer,
-    PagoMultaSerializer, ReservaSerializer,EgresoSerializer, IngresoSerializer
+    PagoMultaSerializer, ReservaSerializer,EgresoSerializer, IngresoSerializer,
+    GenerarExpensasRequestSerializer, GenerarExpensasResponseSerializer,
+    EstadoDeCuentaResponseSerializer
 )
 from .services import simular_pago_qr, iniciar_pago_qr
+from usuarios.permissions import IsPropietario # Importar el nuevo permiso
 
 from auditoria.services import registrar_evento
 
@@ -39,9 +45,77 @@ def format_description(data):
 #        GASTOS
 # =========================
 class GastoViewSet(viewsets.ModelViewSet):
-    queryset = Gasto.objects.select_related('propiedad').all()
     serializer_class = GastoSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'propiedad': ['exact'],
+        'pagado': ['exact'],
+        'mes': ['exact', 'gte', 'lte'],
+        'anio': ['exact', 'gte', 'lte'],
+        'monto': ['gte', 'lte'],
+        'fecha_emision': ['gte', 'lte', 'exact'],
+        'fecha_vencimiento': ['gte', 'lte', 'exact'],
+    }
+    search_fields = ['descripcion', 'propiedad__numero_casa']
+    ordering_fields = ['fecha_emision', 'monto', 'mes', 'anio']
+    ordering = ['-anio', '-mes', 'propiedad']
+
+    def get_queryset(self):
+        """
+        Filtra los gastos según el rol del usuario:
+        - PROPIETARIO: Ve todos los gastos del condominio
+        - RESIDENTE: Solo ve gastos de propiedades donde es residente
+        """
+        user = self.request.user
+        
+        try:
+            if user.profile.role == 'PROPIETARIO':
+                # El propietario ve todos los gastos del condominio
+                return Gasto.objects.select_related('propiedad').all()
+            else:
+                # Residentes ven solo gastos de sus propiedades
+                from usuarios.models import Residente
+                try:
+                    residente = Residente.objects.get(usuario=user)
+                    if residente.propiedad:
+                        return Gasto.objects.select_related('propiedad').filter(
+                            propiedad=residente.propiedad
+                        )
+                    else:
+                        # Si no tiene propiedad asignada, no ve gastos
+                        return Gasto.objects.none()
+                except Residente.DoesNotExist:
+                    # Si no es residente registrado, no ve gastos
+                    return Gasto.objects.none()
+        except AttributeError:
+            # Si no tiene profile, devolver queryset vacío por seguridad
+            return Gasto.objects.none()
+        except Exception:
+            # En caso de cualquier otro error, devolver queryset vacío por seguridad
+            return Gasto.objects.none()
+
+    def get_permissions(self):
+        # Solo los propietarios pueden crear, actualizar o eliminar gastos
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPropietario]
+        # Cualquier usuario autenticado puede ver la lista o el detalle
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        # Asegurar que el gasto sea creado por el administrador que lo registra
+        registrar_evento(
+            usuario=self.request.user,
+            accion="Creación de Gasto",
+            ip_address=_ip(self.request),
+            descripcion=format_description({
+                "gasto_creado": True,
+                "monto": str(serializer.validated_data.get('monto', '')),
+                "propiedad_id": serializer.validated_data.get('propiedad', {}).id if serializer.validated_data.get('propiedad') else None
+            })
+        )
+        serializer.save()
 
     @action(detail=False, methods=['post'], url_path='crear_mensual', permission_classes=[IsAdminUser])
     def crear_mensual(self, request):
@@ -197,12 +271,62 @@ class GastoViewSet(viewsets.ModelViewSet):
 #         MULTAS
 # =========================
 class MultaViewSet(viewsets.ModelViewSet):
-    queryset = Multa.objects.select_related('propiedad').all()
     serializer_class = MultaSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'propiedad': ['exact'],
+        'pagado': ['exact'],
+        'mes': ['exact', 'gte', 'lte'],
+        'anio': ['exact', 'gte', 'lte'],
+        'monto': ['gte', 'lte'],
+        'concepto': ['icontains'],
+        'fecha_emision': ['gte', 'lte', 'exact'],
+        'creado_por': ['exact'],
+    }
+    search_fields = ['concepto', 'descripcion', 'propiedad__numero_casa']
+    ordering_fields = ['fecha_emision', 'monto', 'mes', 'anio']
+    ordering = ['-anio', '-mes', 'propiedad']
+
+    def get_queryset(self):
+        """
+        Filtra las multas según el rol del usuario:
+        - PROPIETARIO: Ve todas las multas del condominio
+        - RESIDENTE: Solo ve multas de propiedades donde es residente
+        """
+        user = self.request.user
+        
+        try:
+            if user.profile.role == 'PROPIETARIO':
+                # El propietario ve todas las multas del condominio
+                return Multa.objects.select_related('propiedad', 'creado_por').all()
+            else:
+                # Residentes ven solo multas de sus propiedades
+                from usuarios.models import Residente
+                try:
+                    residente = Residente.objects.get(usuario=user)
+                    if residente.propiedad:
+                        return Multa.objects.select_related('propiedad', 'creado_por').filter(
+                            propiedad=residente.propiedad
+                        )
+                    else:
+                        return Multa.objects.none()
+                except Residente.DoesNotExist:
+                    return Multa.objects.none()
+        except:
+            return Multa.objects.none()
+
+    def get_permissions(self):
+        # Solo los propietarios pueden crear, actualizar o eliminar multas
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            self.permission_classes = [IsPropietario]
+        # Cualquier usuario autenticado puede ver la lista o el detalle
+        else:
+            self.permission_classes = [IsAuthenticated]
+        return super().get_permissions()
 
     def perform_create(self, serializer):
-        multa = serializer.save()
+        # Asegurar que la multa sea creada por el administrador que la registra
+        multa = serializer.save(creado_por=self.request.user)
         # --- CORRECCIÓN DE AUDITORÍA ---
         registrar_evento(
             usuario=self.request.user,
@@ -302,6 +426,19 @@ class PagoViewSet(viewsets.ModelViewSet):
     queryset = Pago.objects.select_related('gasto', 'usuario').all()
     serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'usuario': ['exact'],
+        'monto': ['gte', 'lte'],
+        'fecha_pago': ['gte', 'lte', 'exact'],
+        'metodo_pago': ['exact'],
+        'gasto': ['exact'],
+        'multa': ['exact'],
+        'reserva': ['exact'],
+    }
+    search_fields = ['usuario__username', 'descripcion', 'metodo_pago']
+    ordering_fields = ['fecha_pago', 'monto']
+    ordering = ['-fecha_pago']
 
     def perform_create(self, serializer):
         pago = serializer.save(usuario=self.request.user)
@@ -343,11 +480,73 @@ class PagoMultaViewSet(viewsets.ModelViewSet):
 #        RESERVAS
 # =========================
 class ReservaViewSet(viewsets.ModelViewSet):
-    queryset = Reserva.objects.select_related('area_comun', 'usuario').all()
     serializer_class = ReservaSerializer
-    permission_classes = [IsAuthenticated]
+    # Filtros avanzados
+    filterset_fields = {
+        'area_comun': ['exact'],
+        'usuario': ['exact'],
+        'fecha_reserva': ['gte', 'lte', 'exact'],
+        'pagada': ['exact'],
+        'costo_total': ['gte', 'lte'],
+    }
+    search_fields = ['area_comun__nombre', 'usuario__username']
+    ordering_fields = ['fecha_reserva', 'hora_inicio', 'costo_total']
+    ordering = ['-fecha_reserva', 'hora_inicio']
+
+    def get_queryset(self):
+        """
+        Filtra las reservas según el rol del usuario:
+        - PROPIETARIO: Ve todas las reservas del condominio
+        - RESIDENTE: Solo ve sus propias reservas
+        """
+        user = self.request.user
+        
+        try:
+            if user.profile.role == 'PROPIETARIO':
+                # El propietario ve todas las reservas
+                return Reserva.objects.select_related('area_comun', 'usuario').all()
+            else:
+                # Los residentes solo ven sus propias reservas
+                return Reserva.objects.select_related('area_comun', 'usuario').filter(usuario=user)
+        except:
+            return Reserva.objects.none()
+
+    def get_permissions(self):
+        """
+        Control de permisos para reservas:
+        - Cualquier usuario autenticado puede crear reservas
+        - Solo el propietario de la reserva o un PROPIETARIO pueden modificar/eliminar
+        """
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Solo el dueño de la reserva o propietario del condominio pueden modificar
+            return [IsAuthenticated()]
+        else:
+            return [IsAuthenticated()]
 
     def perform_create(self, serializer):
+        """
+        Validaciones antes de crear una reserva:
+        1. Verificar que no haya conflictos de horario
+        2. Asignar el usuario actual
+        """
+        # Validar conflictos de horario
+        area_comun = serializer.validated_data['area_comun']
+        fecha_reserva = serializer.validated_data['fecha_reserva']
+        hora_inicio = serializer.validated_data['hora_inicio']
+        hora_fin = serializer.validated_data['hora_fin']
+        
+        # Verificar si ya existe una reserva en ese horario
+        conflictos = Reserva.objects.filter(
+            area_comun=area_comun,
+            fecha_reserva=fecha_reserva,
+            hora_inicio__lt=hora_fin,
+            hora_fin__gt=hora_inicio
+        ).exists()
+        
+        if conflictos:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Ya existe una reserva para ese horario en el área común seleccionada.")
+        
         reserva = serializer.save(usuario=self.request.user)
         # --- CORRECCIÓN DE AUDITORÍA ---
         registrar_evento(
@@ -359,7 +558,33 @@ class ReservaViewSet(viewsets.ModelViewSet):
                 "fecha_reserva": reserva.fecha_reserva.isoformat()
             })
         )
-        # --- FIN CORRECCIÓN ---
+
+    def perform_update(self, serializer):
+        """
+        Solo el dueño de la reserva o un propietario pueden actualizarla
+        """
+        reserva = self.get_object()
+        user = self.request.user
+        
+        # Verificar permisos
+        if user != reserva.usuario and user.profile.role != 'PROPIETARIO':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo puedes modificar tus propias reservas.")
+        
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """
+        Solo el dueño de la reserva o un propietario pueden eliminarla
+        """
+        user = self.request.user
+        
+        # Verificar permisos
+        if user != instance.usuario and user.profile.role != 'PROPIETARIO':
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Solo puedes eliminar tus propias reservas.")
+        
+        instance.delete()
 
 
 # ------------ Comprobantes (PDF con fallback a TXT) ------------
@@ -575,16 +800,25 @@ class PagarReservaView(APIView):
         }, status=status.HTTP_200_OK)
 
 # ------------ Utilidades admin / estado de cuenta ------------
+@extend_schema(
+    request=GenerarExpensasRequestSerializer,
+    responses=GenerarExpensasResponseSerializer,
+    description="Genera expensas masivas para todas las propiedades del condominio",
+    summary="Generar expensas masivas"
+)
 class GenerarExpensasView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = GenerarExpensasRequestSerializer
 
     def post(self, request):
-        monto = request.data.get('monto')
-        descripcion = request.data.get('descripcion')
-        fecha_vencimiento = request.data.get('fecha_vencimiento')
-        if not all([monto, descripcion, fecha_vencimiento]):
-            return Response({"error": "Monto, descripción y fecha_vencimiento son requeridos."},
-                             status=status.HTTP_400_BAD_REQUEST)
+        serializer = GenerarExpensasRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = serializer.validated_data
+        monto = validated_data['monto']
+        descripcion = validated_data['descripcion']
+        fecha_vencimiento = validated_data['fecha_vencimiento']
 
         creados = 0
         gastos_creados_ids = []
@@ -616,8 +850,14 @@ class GenerarExpensasView(APIView):
 
         return Response({"mensaje": f"{creados} gastos de expensas generados."}, status=status.HTTP_201_CREATED)
 
+@extend_schema(
+    responses=EstadoDeCuentaResponseSerializer(many=True),
+    description="Obtiene el estado de cuenta del usuario autenticado con todas sus deudas pendientes",
+    summary="Estado de cuenta del usuario"
+)
 class EstadoDeCuentaView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = EstadoDeCuentaResponseSerializer
 
     def get(self, request, *args, **kwargs):
         # ... (lógica sin cambios) ...

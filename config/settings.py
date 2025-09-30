@@ -38,16 +38,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'django_filters',  # Añadido para filtros avanzados
     "notificaciones",
 ]
 FCM_SERVER_KEY = 'xhdePFTJ5JCcWRkbXXaGoEq_6XUOTlFBWa7GomXTt_0'
 NOTIF_FAKE_SEND = True
-# config/settings.py
 
-# ... (toda tu configuración existente) ...
-
-# ========= CLAVE DE API PARA LA CÁMARA DE IA =========
-CAMARA_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
+# Modelo de usuario personalizado
+# AUTH_USER_MODEL = 'usuarios.User'  # Comentado por ahora para evitar problemas de migración
 # --- Middleware (corsheaders antes de CommonMiddleware) ---
 MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -156,6 +154,13 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 
+    # Filtros y backends por defecto
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+
     # Throttling de alcance (ScopedRateThrottle) para los endpoints de seguridad
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.ScopedRateThrottle",
@@ -182,3 +187,6 @@ SPECTACULAR_SETTINGS = {
 }
 
 AWS_REKOGNITION_COLLECTION_ID = "condominio_residentes"
+
+# --- CLAVE DE API PARA LA CÁMARA DE IA ---
+SECURITY_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
