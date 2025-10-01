@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from condominio.models import Propiedad
 
 
@@ -33,6 +34,13 @@ class Vehiculo(models.Model):
 
 
 class Visita(models.Model):
+    # Estados posibles para una visita
+    class EstadoVisita(models.TextChoices):
+        PROGRAMADA = 'PROGRAMADA', 'Programada'
+        EN_CURSO = 'EN_CURSO', 'En Curso'
+        FINALIZADA = 'FINALIZADA', 'Finalizada'
+        CANCELADA = 'CANCELADA', 'Cancelada'
+
     visitante = models.ForeignKey(Visitante, on_delete=models.CASCADE, related_name="visitas")
     propiedad = models.ForeignKey(Propiedad, on_delete=models.CASCADE, related_name="visitas")
 
@@ -41,12 +49,28 @@ class Visita(models.Model):
 
     ingreso_real = models.DateTimeField(null=True, blank=True)
     salida_real = models.DateTimeField(null=True, blank=True)
+    
+    # Campo estado agregado para solucionar error de filtros
+    estado = models.CharField(
+        max_length=20,
+        choices=EstadoVisita.choices,
+        default=EstadoVisita.PROGRAMADA,
+        db_index=True
+    )
+
+    def save(self, *args, **kwargs):
+        # Actualizar estado automáticamente basado en ingresos/salidas
+        if self.ingreso_real and not self.salida_real:
+            self.estado = self.EstadoVisita.EN_CURSO
+        elif self.ingreso_real and self.salida_real:
+            self.estado = self.EstadoVisita.FINALIZADA
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ("-fecha_ingreso_programado",)
 
     def __str__(self):
-        return f"{self.visitante} → {self.propiedad}"
+        return f"{self.visitante} → {self.propiedad} ({self.estado})"
 
 # seguridad/models.py
 
