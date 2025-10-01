@@ -3,6 +3,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.shortcuts import redirect
 
 from django.conf.urls.static import static
 from rest_framework.authtoken.views import obtain_auth_token
@@ -16,7 +17,14 @@ from drf_spectacular.views import (
 )
 from .api_views import APIWelcomeView
 
+def redirect_to_api(request):
+    """Redirecciona la URL raíz a la vista de bienvenida de la API"""
+    return redirect('/api/')
+
 urlpatterns = [
+    # Redirección desde la raíz a la API
+    path('', redirect_to_api, name='root_redirect'),
+    
     path('admin/', admin.site.urls),
 
     # Vista de bienvenida de la API

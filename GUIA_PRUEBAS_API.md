@@ -105,7 +105,7 @@ Invoke-WebRequest -Uri "http://localhost:8000/api/seguridad/visitas/" -Method GE
 | `/api/login/` | ✅ Funciona | No requerida |
 | `/api/registro/` | ✅ Funciona | No requerida |
 | `/api/seguridad/visitas/` | ✅ Funciona | Token requerido |
-| `/api/` | ❌ No existe | - |
+| `/api/` | ✅ Vista de Bienvenida | - |
 
 ---
 

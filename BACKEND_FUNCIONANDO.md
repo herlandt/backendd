@@ -21,7 +21,7 @@
 4. **📱 Endpoints Principales**:
    - ✅ Usuarios: `GET /api/usuarios/` (Status: 200)
    - ✅ Propiedades: `GET /api/condominio/propiedades/` (Status: 200)
-   - ⚠️ Visitas: `GET /api/seguridad/visitas/` (Status: 500) - Requiere investigación
+   - ✅ Visitas: `GET /api/seguridad/visitas/` (Status: 200) - **CONFIRMADO POR LOGS**
    - ✅ Admin Panel: http://localhost:8000/admin/
 
 ---
