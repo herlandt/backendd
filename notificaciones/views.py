@@ -3,12 +3,13 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework import status
 
-from .serializers import DeviceTokenSerializer, DispositivoSerializer
+from .serializers import DeviceTokenSerializer, DispositivoSerializer, EnviarNotificacionRequestSerializer, NotificacionResponseSerializer
 from .models import DeviceToken, Dispositivo
 from .services import send_push
 
 class RegistrarDeviceTokenView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = DeviceTokenSerializer  # Para documentación
 
     def post(self, request):
         ser = DeviceTokenSerializer(data=request.data, context={"request": request})
@@ -18,6 +19,7 @@ class RegistrarDeviceTokenView(APIView):
 
 class EnviarNotificacionDemoView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = NotificacionResponseSerializer  # Para documentación
 
     def post(self, request):
         title = request.data.get("title") or "Demo"

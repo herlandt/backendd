@@ -21,7 +21,12 @@ from .serializers import (
     VehiculoSerializer, 
     VisitanteSerializer, 
     EventoSeguridadSerializer,
-    DeteccionSerializer
+    DeteccionSerializer,
+    ControlAccesoResponseSerializer,
+    DashboardResumenResponseSerializer,
+    DashboardSeriesResponseSerializer,
+    TopVisitantesResponseSerializer,
+    SimpleOperationResponseSerializer
 )
 from .permissions import HasAPIKey
 from usuarios.models import Residente
@@ -32,6 +37,7 @@ from usuarios.permissions import IsPropietario, IsPersonalSeguridad
 class ControlAccesoVehicularView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_scope = "control_acceso"
+    serializer_class = ControlAccesoResponseSerializer  # Para documentación
 
     def _handle_ingreso(self, placa):
         ahora = timezone.now()
@@ -67,6 +73,7 @@ class ControlAccesoVehicularView(APIView):
 class ControlSalidaVehicularView(APIView):
     permission_classes = [IsAuthenticated]
     throttle_scope = "control_salida"
+    serializer_class = ControlAccesoResponseSerializer  # Para documentación
 
     def _handle_salida(self, placa):
         try:
@@ -107,6 +114,7 @@ class VisitasAbiertasView(APIView):
 
 class ExportVisitasCSVView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = SimpleOperationResponseSerializer  # Para documentación
     def get(self, request, *args, **kwargs):
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="visitas.csv"'
@@ -120,6 +128,7 @@ class ExportVisitasCSVView(APIView):
 
 class CerrarVisitasVencidasView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = SimpleOperationResponseSerializer  # Para documentación
     def post(self, request, *args, **kwargs):
         from django.core.management import call_command
         call_command('cerrar_visitas_vencidas')
@@ -128,6 +137,7 @@ class CerrarVisitasVencidasView(APIView):
 
 class DashboardResumenView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = DashboardResumenResponseSerializer  # Para documentación
     def get(self, request, *args, **kwargs):
         abiertas = Visita.objects.filter(ingreso_real__isnull=False, salida_real__isnull=True).count()
         total_hoy = Visita.objects.filter(ingreso_real__date=timezone.now().date()).count()
@@ -136,12 +146,14 @@ class DashboardResumenView(APIView):
 
 class DashboardSeriesView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = DashboardSeriesResponseSerializer  # Para documentación
     def get(self, request, *args, **kwargs):
         return Response({"series": "data"})
 
 
 class DashboardTopVisitantesView(APIView):
     permission_classes = [IsAdminUser]
+    serializer_class = TopVisitantesResponseSerializer  # Para documentación
     def get(self, request, *args, **kwargs):
         days = int(request.query_params.get('days', 30))
         limit = int(request.query_params.get('limit', 5))
@@ -152,6 +164,7 @@ class DashboardTopVisitantesView(APIView):
 
 class IAControlVehicularView(APIView):
     permission_classes = [HasAPIKey]
+    serializer_class = ControlAccesoResponseSerializer  # Para documentación
     
     def _registrar_evento(self, tipo_evento, placa, accion, motivo, vehiculo=None):
         EventoSeguridad.objects.create(tipo_evento=tipo_evento, placa_detectada=placa, accion=accion, motivo=motivo, vehiculo_registrado=vehiculo)
@@ -184,6 +197,7 @@ class IAControlVehicularView(APIView):
 class VerificarRostroView(APIView):
     permission_classes = [HasAPIKey]
     parser_classes = [MultiPartParser, FormParser]
+    serializer_class = SimpleOperationResponseSerializer  # Para documentación
 
     def post(self, request, *args, **kwargs):
         if 'foto' not in request.FILES:
@@ -249,7 +263,7 @@ class VisitaViewSet(viewsets.ModelViewSet):
         'salida_real': ['isnull'],
         'estado': ['exact'],
     }
-    search_fields = ['visitante__nombre', 'visitante__cedula', 'propiedad__numero']
+    search_fields = ['visitante__nombre_completo', 'visitante__documento', 'propiedad__numero']
     ordering_fields = ['fecha_ingreso_programado', 'fecha_salida_programada', 'ingreso_real']
     ordering = ['-fecha_ingreso_programado']
 
@@ -344,15 +358,16 @@ class VehiculoViewSet(viewsets.ModelViewSet):
 class VisitanteViewSet(viewsets.ModelViewSet):
     queryset = Visitante.objects.all()
     serializer_class = VisitanteSerializer
-    # Filtros avanzados
+    # Filtros avanzados - CORREGIDOS para coincidir con el modelo real
     filterset_fields = {
-        'nombre': ['icontains'],
-        'cedula': ['exact'],
+        'nombre_completo': ['icontains'],  # Campo correcto del modelo
+        'documento': ['exact'],  # Campo correcto del modelo
         'telefono': ['exact', 'icontains'],
+        'email': ['icontains'],  # Campo adicional que existe
     }
-    search_fields = ['nombre', 'cedula', 'telefono']
-    ordering_fields = ['nombre', 'cedula']
-    ordering = ['nombre']
+    search_fields = ['nombre_completo', 'documento', 'telefono']  # Campos correctos
+    ordering_fields = ['nombre_completo', 'documento']  # Campos correctos
+    ordering = ['nombre_completo']
 
     def get_permissions(self):
         # Solo propietarios pueden crear, actualizar o eliminar visitantes
@@ -366,16 +381,16 @@ class VisitanteViewSet(viewsets.ModelViewSet):
 class EventoSeguridadViewSet(viewsets.ModelViewSet):
     queryset = EventoSeguridad.objects.all()
     serializer_class = EventoSeguridadSerializer
-    # Filtros avanzados
+    # Filtros avanzados - CORREGIDOS para coincidir con el modelo real
     filterset_fields = {
-        'tipo': ['exact'],
+        'tipo_evento': ['exact'],  # Campo correcto del modelo
         'fecha_hora': ['gte', 'lte', 'exact'],
-        'ubicacion': ['icontains'],
-        'gravedad': ['exact'],
-        'resuelto': ['exact'],
+        'accion': ['exact'],  # Campo que existe en el modelo
+        'placa_detectada': ['icontains'],  # Campo que existe en el modelo
+        'vehiculo_registrado': ['exact'],  # Relación que existe
     }
-    search_fields = ['tipo', 'descripcion', 'ubicacion']
-    ordering_fields = ['fecha_hora', 'gravedad', 'tipo']
+    search_fields = ['placa_detectada', 'motivo']  # Campos que existen
+    ordering_fields = ['fecha_hora', 'tipo_evento', 'accion']  # Campos que existen
     ordering = ['-fecha_hora']
 
     def get_permissions(self):

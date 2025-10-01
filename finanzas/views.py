@@ -27,7 +27,10 @@ from .serializers import (
     GastoSerializer, PagoSerializer, MultaSerializer,
     PagoMultaSerializer, ReservaSerializer,EgresoSerializer, IngresoSerializer,
     GenerarExpensasRequestSerializer, GenerarExpensasResponseSerializer,
-    EstadoDeCuentaResponseSerializer
+    EstadoDeCuentaResponseSerializer, SimpleResponseSerializer, PDFResponseSerializer,
+    SimularPagoRequestSerializer, SimularPagoResponseSerializer, 
+    ReporteMorosidadResponseSerializer, WebhookStripeSerializer,
+    PagarReservaRequestSerializer, ReporteUsoAreasComunesResponseSerializer
 )
 from .services import simular_pago_qr, iniciar_pago_qr
 from usuarios.permissions import IsPropietario # Importar el nuevo permiso
@@ -617,6 +620,7 @@ class _ReciboBase:
 
 class ReciboPagoPDFView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = PDFResponseSerializer  # Para documentación
 
     def get(self, request, pago_id: int, *args, **kwargs):
         title = f"Recibo de pago #{pago_id}"
@@ -642,6 +646,7 @@ class ReciboPagoPDFView(APIView):
 
 class ReciboPagoMultaPDFView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = PDFResponseSerializer  # Para documentación
 
     def get(self, request, pago_multa_id: int, *args, **kwargs):
         title = f"Recibo de pago de multa #{pago_multa_id}"
@@ -668,6 +673,7 @@ class ReciboPagoMultaPDFView(APIView):
 # ------------ Reportes (plantillas funcionales) ------------
 class ReporteMorosidadView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = ReporteMorosidadResponseSerializer  # Para documentación
 
     def get(self, request, *args, **kwargs):
         mes = request.query_params.get("mes")
@@ -687,6 +693,7 @@ class ReporteMorosidadView(APIView):
 
 class ReporteResumenView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = SimpleResponseSerializer  # Para documentación
 
     def get(self, request, *args, **kwargs):
         desde = request.query_params.get("desde")
@@ -707,6 +714,7 @@ class IniciarPagoView(APIView):
 
 class SimularPagoView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = SimularPagoResponseSerializer  # Para documentación
 
     def post(self, request, pago_id, *args, **kwargs):
         try:
@@ -739,6 +747,7 @@ class SimularPagoView(APIView):
 
 class WebhookConfirmacionPagoView(APIView):
     permission_classes = [AllowAny]
+    serializer_class = WebhookStripeSerializer  # Para documentación
 
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -770,6 +779,7 @@ class WebhookConfirmacionPagoView(APIView):
 
 class PagarReservaView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = PagarReservaRequestSerializer  # Para documentación
 
     def post(self, request, reserva_id, *args, **kwargs):
         try:
@@ -935,6 +945,7 @@ class IngresoViewSet(viewsets.ModelViewSet):
 
 class ReporteFinancieroView(APIView):
     permission_classes = [permissions.IsAdminUser]
+    serializer_class = SimpleResponseSerializer  # Para documentación
 
     def get_financial_data(self, request):
         # ... (lógica sin cambios) ...
@@ -994,6 +1005,7 @@ class ReporteFinancieroView(APIView):
 
 class ReporteUsoAreasComunesView(APIView):
     permission_classes = [permissions.IsAdminUser]
+    serializer_class = ReporteUsoAreasComunesResponseSerializer  # Para documentación
 
     def get(self, request, *args, **kwargs):
         # ... (lógica sin cambios) ...

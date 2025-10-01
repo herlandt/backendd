@@ -1,0 +1,5910 @@
+openapi: 3.0.3
+info:
+  title: Condominio API
+  version: 1.0.0
+  description: Endpoints para seguridad, finanzas, mantenimiento, usuarios.
+paths:
+  /api/:
+    get:
+      operationId: api_retrieve
+      description: Vista de bienvenida de la API del Sistema de Gestión de Condominios
+      summary: API Welcome
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/APIWelcomeResponse'
+          description: ''
+  /api/condominio/areas-comunes/:
+    get:
+      operationId: api_condominio_areas_comunes_list
+      parameters:
+      - in: query
+        name: capacidad
+        schema:
+          type: integer
+      - in: query
+        name: capacidad__gte
+        schema:
+          type: integer
+      - in: query
+        name: capacidad__lte
+        schema:
+          type: integer
+      - in: query
+        name: costo_reserva
+        schema:
+          type: number
+      - in: query
+        name: costo_reserva__gte
+        schema:
+          type: number
+      - in: query
+        name: costo_reserva__lte
+        schema:
+          type: number
+      - in: query
+        name: nombre__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AreaComun'
+          description: ''
+  /api/condominio/areas-comunes/{id}/:
+    get:
+      operationId: api_condominio_areas_comunes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this area comun.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AreaComun'
+          description: ''
+  /api/condominio/avisos/:
+    get:
+      operationId: api_condominio_avisos_list
+      parameters:
+      - in: query
+        name: fecha_publicacion
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_publicacion__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_publicacion__lte
+        schema:
+          type: string
+          format: date-time
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: titulo__icontains
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Aviso'
+          description: ''
+    post:
+      operationId: api_condominio_avisos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aviso'
+          description: ''
+  /api/condominio/avisos/{id}/:
+    get:
+      operationId: api_condominio_avisos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this aviso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aviso'
+          description: ''
+    put:
+      operationId: api_condominio_avisos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this aviso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Aviso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aviso'
+          description: ''
+    patch:
+      operationId: api_condominio_avisos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this aviso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAviso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAviso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAviso'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Aviso'
+          description: ''
+    delete:
+      operationId: api_condominio_avisos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this aviso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/condominio/propiedades/:
+    get:
+      operationId: api_condominio_propiedades_list
+      parameters:
+      - in: query
+        name: metros_cuadrados__gte
+        schema:
+          type: number
+      - in: query
+        name: metros_cuadrados__lte
+        schema:
+          type: number
+      - in: query
+        name: numero_casa
+        schema:
+          type: string
+      - in: query
+        name: numero_casa__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: propietario
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Propiedad'
+          description: ''
+    post:
+      operationId: api_condominio_propiedades_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Propiedad'
+          description: ''
+  /api/condominio/propiedades/{id}/:
+    get:
+      operationId: api_condominio_propiedades_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this propiedad.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Propiedad'
+          description: ''
+    put:
+      operationId: api_condominio_propiedades_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this propiedad.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Propiedad'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Propiedad'
+          description: ''
+    patch:
+      operationId: api_condominio_propiedades_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this propiedad.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPropiedad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPropiedad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPropiedad'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Propiedad'
+          description: ''
+    delete:
+      operationId: api_condominio_propiedades_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this propiedad.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/condominio/reglas/:
+    get:
+      operationId: api_condominio_reglas_list
+      description: |-
+        Endpoint de API para visualizar las reglas del condominio.
+        Es de solo lectura. Las reglas se gestionan desde el panel de administrador.
+      parameters:
+      - in: query
+        name: activa
+        schema:
+          type: boolean
+      - in: query
+        name: categoria
+        schema:
+          type: string
+          enum:
+          - FINANZAS
+          - GENERAL
+          - MANTENIMIENTO
+          - SEGURIDAD
+        description: |-
+          * `FINANZAS` - Finanzas
+          * `SEGURIDAD` - Seguridad
+          * `MANTENIMIENTO` - Mantenimiento
+          * `GENERAL` - General
+      - in: query
+        name: codigo
+        schema:
+          type: string
+      - in: query
+        name: codigo__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Regla'
+          description: ''
+  /api/condominio/reglas/{id}/:
+    get:
+      operationId: api_condominio_reglas_retrieve
+      description: |-
+        Endpoint de API para visualizar las reglas del condominio.
+        Es de solo lectura. Las reglas se gestionan desde el panel de administrador.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this regla.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Regla'
+          description: ''
+  /api/finanzas/egresos/:
+    get:
+      operationId: api_finanzas_egresos_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Egreso'
+          description: ''
+    post:
+      operationId: api_finanzas_egresos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Egreso'
+          description: ''
+  /api/finanzas/egresos/{id}/:
+    get:
+      operationId: api_finanzas_egresos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Egreso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Egreso'
+          description: ''
+    put:
+      operationId: api_finanzas_egresos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Egreso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Egreso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Egreso'
+          description: ''
+    patch:
+      operationId: api_finanzas_egresos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Egreso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEgreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEgreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEgreso'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Egreso'
+          description: ''
+    delete:
+      operationId: api_finanzas_egresos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Egreso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/estado-cuenta-unificado/:
+    get:
+      operationId: api_finanzas_estado_cuenta_unificado_retrieve
+      description: Obtiene todas las deudas pendientes del usuario (gastos, multas,
+        reservas) para facilitar la selección de pago
+      summary: Estado de cuenta unificado
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoCuentaUnificado'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/finanzas/estado-de-cuenta/:
+    get:
+      operationId: api_finanzas_estado_de_cuenta_list
+      description: Obtiene el estado de cuenta del usuario autenticado con todas sus
+        deudas pendientes
+      summary: Estado de cuenta del usuario
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EstadoDeCuentaResponse'
+          description: ''
+  /api/finanzas/expensas/generar/:
+    post:
+      operationId: api_finanzas_expensas_generar_create
+      description: Genera expensas masivas para todas las propiedades del condominio
+      summary: Generar expensas masivas
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerarExpensasRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GenerarExpensasRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GenerarExpensasRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerarExpensasResponse'
+          description: ''
+  /api/finanzas/gastos/:
+    get:
+      operationId: api_finanzas_gastos_list
+      parameters:
+      - in: query
+        name: anio
+        schema:
+          type: integer
+      - in: query
+        name: anio__gte
+        schema:
+          type: integer
+      - in: query
+        name: anio__lte
+        schema:
+          type: integer
+      - in: query
+        name: fecha_emision
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_emision__gte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_emision__lte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_vencimiento
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_vencimiento__gte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_vencimiento__lte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: mes
+        schema:
+          type: integer
+      - in: query
+        name: mes__gte
+        schema:
+          type: integer
+      - in: query
+        name: mes__lte
+        schema:
+          type: integer
+      - in: query
+        name: monto__gte
+        schema:
+          type: number
+      - in: query
+        name: monto__lte
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: pagado
+        schema:
+          type: boolean
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Gasto'
+          description: ''
+    post:
+      operationId: api_finanzas_gastos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
+  /api/finanzas/gastos/{id}/:
+    get:
+      operationId: api_finanzas_gastos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gasto.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
+    put:
+      operationId: api_finanzas_gastos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gasto.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
+    patch:
+      operationId: api_finanzas_gastos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gasto.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGasto'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
+    delete:
+      operationId: api_finanzas_gastos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gasto.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/gastos/crear_mensual/:
+    post:
+      operationId: api_finanzas_gastos_crear_mensual_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
+  /api/finanzas/historial-pagos-unificados/:
+    get:
+      operationId: api_finanzas_historial_pagos_unificados_list
+      description: Obtiene el historial de pagos realizados por el usuario, incluyendo
+        pagos unificados
+      summary: Historial de pagos unificados
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PagoUnificado'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/finanzas/ingresos/:
+    get:
+      operationId: api_finanzas_ingresos_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingreso'
+          description: ''
+    post:
+      operationId: api_finanzas_ingresos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingreso'
+          description: ''
+  /api/finanzas/ingresos/{id}/:
+    get:
+      operationId: api_finanzas_ingresos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ingreso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingreso'
+          description: ''
+    put:
+      operationId: api_finanzas_ingresos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ingreso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Ingreso'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingreso'
+          description: ''
+    patch:
+      operationId: api_finanzas_ingresos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ingreso.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedIngreso'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedIngreso'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedIngreso'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ingreso'
+          description: ''
+    delete:
+      operationId: api_finanzas_ingresos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Ingreso.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/multas/:
+    get:
+      operationId: api_finanzas_multas_list
+      parameters:
+      - in: query
+        name: anio
+        schema:
+          type: integer
+      - in: query
+        name: anio__gte
+        schema:
+          type: integer
+      - in: query
+        name: anio__lte
+        schema:
+          type: integer
+      - in: query
+        name: concepto__icontains
+        schema:
+          type: string
+      - in: query
+        name: creado_por
+        schema:
+          type: integer
+      - in: query
+        name: fecha_emision
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_emision__gte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_emision__lte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: mes
+        schema:
+          type: integer
+      - in: query
+        name: mes__gte
+        schema:
+          type: integer
+      - in: query
+        name: mes__lte
+        schema:
+          type: integer
+      - in: query
+        name: monto__gte
+        schema:
+          type: number
+      - in: query
+        name: monto__lte
+        schema:
+          type: number
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: pagado
+        schema:
+          type: boolean
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Multa'
+          description: ''
+    post:
+      operationId: api_finanzas_multas_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Multa'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
+  /api/finanzas/multas/{id}/:
+    get:
+      operationId: api_finanzas_multas_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this multa.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
+    put:
+      operationId: api_finanzas_multas_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this multa.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Multa'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
+    patch:
+      operationId: api_finanzas_multas_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this multa.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMulta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMulta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMulta'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
+    delete:
+      operationId: api_finanzas_multas_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this multa.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/pagos/:
+    get:
+      operationId: api_finanzas_pagos_list
+      parameters:
+      - in: query
+        name: estado_pago
+        schema:
+          type: string
+          enum:
+          - CANCELADO
+          - FALLIDO
+          - PAGADO
+          - PENDIENTE
+        description: |-
+          * `PENDIENTE` - Pendiente
+          * `PAGADO` - Pagado
+          * `FALLIDO` - Fallido
+          * `CANCELADO` - Cancelado
+      - in: query
+        name: fecha_pago
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_pago__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_pago__lte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: gasto
+        schema:
+          type: integer
+      - in: query
+        name: monto_total__gte
+        schema:
+          type: number
+      - in: query
+        name: monto_total__lte
+        schema:
+          type: number
+      - in: query
+        name: multa
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: reserva
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: usuario
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pago'
+          description: ''
+    post:
+      operationId: api_finanzas_pagos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pago'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pago'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Pago'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+          description: ''
+  /api/finanzas/pagos/{pago_id}/comprobante/:
+    get:
+      operationId: api_finanzas_pagos_comprobante_retrieve
+      description: Genera un recibo de pago en formato PDF
+      summary: Generar recibo de pago en PDF
+      parameters:
+      - in: path
+        name: pago_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: Archivo PDF del recibo
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+  /api/finanzas/pagos/{pago_id}/simular/:
+    post:
+      operationId: api_finanzas_pagos_simular_create
+      description: Simula el pago de un gasto o reserva
+      summary: Simular pago
+      parameters:
+      - in: path
+        name: pago_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimularPagoResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+  /api/finanzas/pagos/{id}/:
+    get:
+      operationId: api_finanzas_pagos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Pago.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+          description: ''
+    put:
+      operationId: api_finanzas_pagos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Pago.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pago'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Pago'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Pago'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+          description: ''
+    patch:
+      operationId: api_finanzas_pagos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Pago.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPago'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPago'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPago'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pago'
+          description: ''
+    delete:
+      operationId: api_finanzas_pagos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Pago.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/pagos/crear-checkout-stripe/:
+    post:
+      operationId: api_finanzas_pagos_crear_checkout_stripe_create
+      description: Crea una sesión de Stripe Checkout para pagar múltiples deudas
+        (gastos, multas, reservas) en una sola transacción
+      summary: Crear sesión de pago unificado con Stripe
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateStripeCheckoutResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/finanzas/reportes/estado-morosidad/:
+    get:
+      operationId: api_finanzas_reportes_estado_morosidad_retrieve
+      description: Genera reporte de morosidad en formato PDF
+      summary: Generar reporte de morosidad (PDF)
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+          description: Archivo PDF del reporte
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+  /api/finanzas/reportes/financiero/:
+    get:
+      operationId: api_finanzas_reportes_financiero_retrieve
+      description: Genera reporte financiero completo con ingresos y egresos
+      summary: Reporte financiero detallado
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteFinancieroResponse'
+          description: ''
+  /api/finanzas/reportes/resumen/:
+    get:
+      operationId: api_finanzas_reportes_resumen_retrieve
+      description: Resumen de estadísticas financieras del condominio
+      summary: Reporte resumen financiero
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReporteResumenResponse'
+          description: ''
+  /api/finanzas/reportes/uso-areas-comunes/:
+    get:
+      operationId: api_finanzas_reportes_uso_areas_comunes_list
+      description: Estadísticas de uso y ingresos de áreas comunes
+      summary: Reporte de uso de áreas comunes
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReporteUsoAreasComunesResponse'
+          description: ''
+  /api/finanzas/reservas/:
+    get:
+      operationId: api_finanzas_reservas_list
+      parameters:
+      - in: query
+        name: area_comun
+        schema:
+          type: integer
+      - in: query
+        name: costo__gte
+        schema:
+          type: number
+      - in: query
+        name: costo__lte
+        schema:
+          type: number
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - CONFIRMADA
+          - PAGADA
+          - SOLICITADA
+        description: |-
+          * `SOLICITADA` - Solicitada
+          * `CONFIRMADA` - Confirmada
+          * `PAGADA` - Pagada
+          * `CANCELADA` - Cancelada
+      - in: query
+        name: fecha_reserva
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_reserva__gte
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: fecha_reserva__lte
+        schema:
+          type: string
+          format: date
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: pagada
+        schema:
+          type: boolean
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: usuario
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reserva'
+          description: ''
+    post:
+      operationId: api_finanzas_reservas_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+          description: ''
+  /api/finanzas/reservas/{id}/:
+    get:
+      operationId: api_finanzas_reservas_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reserva.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+          description: ''
+    put:
+      operationId: api_finanzas_reservas_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reserva.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Reserva'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+          description: ''
+    patch:
+      operationId: api_finanzas_reservas_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reserva.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedReserva'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedReserva'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedReserva'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+          description: ''
+    delete:
+      operationId: api_finanzas_reservas_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this reserva.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/finanzas/reservas/{reserva_id}/confirmar/:
+    post:
+      operationId: api_finanzas_reservas_confirmar_create
+      description: Permite a los administradores confirmar una reserva solicitada
+      summary: Confirmar reserva
+      parameters:
+      - in: path
+        name: reserva_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+  /api/finanzas/reservas/{reserva_id}/pagar/:
+    post:
+      operationId: api_finanzas_reservas_pagar_create
+      description: Procesa el pago de una reserva de área común
+      summary: Pagar reserva
+      parameters:
+      - in: path
+        name: reserva_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagarReservaResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundResponse'
+          description: ''
+  /api/finanzas/webhook/pagosnet/:
+    post:
+      operationId: api_finanzas_webhook_pagosnet_create
+      description: Endpoint para recibir confirmaciones de pago desde la pasarela
+      summary: Webhook confirmación de pago
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookPagoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/WebhookPagoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/WebhookPagoRequest'
+        required: true
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+          description: ''
+  /api/finanzas/webhook/stripe/:
+    post:
+      operationId: api_finanzas_webhook_stripe_create
+      description: Endpoint para recibir notificaciones de Stripe sobre el estado
+        de los pagos
+      summary: Webhook de Stripe
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                type:
+                  type: string
+                data:
+                  type: object
+                  additionalProperties: true
+              description: Evento de webhook de Stripe
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/mantenimiento/personal/:
+    get:
+      operationId: api_mantenimiento_personal_list
+      parameters:
+      - in: query
+        name: activo
+        schema:
+          type: boolean
+      - in: query
+        name: especialidad
+        schema:
+          type: string
+      - in: query
+        name: especialidad__icontains
+        schema:
+          type: string
+      - in: query
+        name: nombre__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonalMantenimiento'
+          description: ''
+    post:
+      operationId: api_mantenimiento_personal_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalMantenimiento'
+          description: ''
+  /api/mantenimiento/personal/{id}/:
+    get:
+      operationId: api_mantenimiento_personal_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this personal mantenimiento.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalMantenimiento'
+          description: ''
+    put:
+      operationId: api_mantenimiento_personal_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this personal mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PersonalMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalMantenimiento'
+          description: ''
+    patch:
+      operationId: api_mantenimiento_personal_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this personal mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPersonalMantenimiento'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalMantenimiento'
+          description: ''
+    delete:
+      operationId: api_mantenimiento_personal_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this personal mantenimiento.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/mantenimiento/solicitudes/:
+    get:
+      operationId: api_mantenimiento_solicitudes_list
+      parameters:
+      - in: query
+        name: asignado_a
+        schema:
+          type: integer
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - EN_PROGRESO
+          - FINALIZADA
+          - PENDIENTE
+        description: |-
+          * `PENDIENTE` - Pendiente
+          * `EN_PROGRESO` - En progreso
+          * `FINALIZADA` - Finalizada
+          * `CANCELADA` - Cancelada
+      - in: query
+        name: fecha_creacion
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_creacion__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_creacion__lte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_resolucion
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_resolucion__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_resolucion__isnull
+        schema:
+          type: boolean
+      - in: query
+        name: fecha_resolucion__lte
+        schema:
+          type: string
+          format: date-time
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: prioridad
+        schema:
+          type: string
+          enum:
+          - ALTA
+          - BAJA
+          - MEDIA
+          - URGENTE
+        description: |-
+          * `BAJA` - Baja
+          * `MEDIA` - Media
+          * `ALTA` - Alta
+          * `URGENTE` - Urgente
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: solicitado_por
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+    post:
+      operationId: api_mantenimiento_solicitudes_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+  /api/mantenimiento/solicitudes/{id}/:
+    get:
+      operationId: api_mantenimiento_solicitudes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+    put:
+      operationId: api_mantenimiento_solicitudes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+    patch:
+      operationId: api_mantenimiento_solicitudes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSolicitudMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSolicitudMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSolicitudMantenimiento'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+    delete:
+      operationId: api_mantenimiento_solicitudes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/mantenimiento/solicitudes/{id}/asignar/:
+    post:
+      operationId: api_mantenimiento_solicitudes_asignar_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+  /api/mantenimiento/solicitudes/{id}/cambiar_estado/:
+    post:
+      operationId: api_mantenimiento_solicitudes_cambiar_estado_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this solicitud mantenimiento.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SolicitudMantenimiento'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudMantenimiento'
+          description: ''
+  /api/notificaciones/demo/:
+    post:
+      operationId: api_notificaciones_demo_create
+      description: Envía una notificación de prueba a dispositivos registrados
+      summary: Enviar notificación demo
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnviarNotificacionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EnviarNotificacionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EnviarNotificacionRequest'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnviarNotificacionResponse'
+          description: ''
+  /api/notificaciones/registrar-dispositivo/:
+    post:
+      operationId: api_notificaciones_registrar_dispositivo_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Dispositivo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Dispositivo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Dispositivo'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispositivo'
+          description: ''
+  /api/notificaciones/token/:
+    post:
+      operationId: api_notificaciones_token_create
+      description: Registra un token de dispositivo para notificaciones push
+      summary: Registrar token de dispositivo
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceToken'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DeviceToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DeviceToken'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceToken'
+          description: ''
+  /api/seguridad/cerrar-visitas-vencidas/:
+    post:
+      operationId: api_seguridad_cerrar_visitas_vencidas_create
+      description: Cierra automáticamente las visitas que han expirado
+      summary: Cerrar visitas vencidas
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CerrarVisitasResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CerrarVisitasResponse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CerrarVisitasResponse'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CerrarVisitasResponse'
+          description: ''
+  /api/seguridad/control-acceso-vehicular/:
+    post:
+      operationId: api_seguridad_control_acceso_vehicular_create
+      description: Controla el acceso de vehículos al condominio
+      summary: Control de acceso vehicular
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlAccesoResponse'
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: ''
+  /api/seguridad/control-salida-vehicular/:
+    post:
+      operationId: api_seguridad_control_salida_vehicular_create
+      description: Registra la salida de vehículos del condominio
+      summary: Control de salida vehicular
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlSalidaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ControlSalidaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ControlSalidaRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ControlSalidaResponse'
+          description: ''
+  /api/seguridad/dashboard/resumen/:
+    get:
+      operationId: api_seguridad_dashboard_resumen_retrieve
+      description: Devuelve estadísticas generales del sistema de seguridad.
+      summary: Resumen Dashboard Seguridad
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResumen'
+          description: ''
+  /api/seguridad/dashboard/series/:
+    get:
+      operationId: api_seguridad_dashboard_series_list
+      description: Obtiene series temporales para gráficos del dashboard
+      summary: Series de datos del dashboard
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardSeriesResponse'
+          description: ''
+  /api/seguridad/dashboard/top-visitantes/:
+    get:
+      operationId: api_seguridad_dashboard_top_visitantes_list
+      description: Devuelve una lista de los 5 visitantes que más han ingresado al
+        condominio.
+      summary: Top 5 Visitantes Más Frecuentes
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TopVisitante'
+          description: ''
+  /api/seguridad/detecciones/:
+    get:
+      operationId: api_seguridad_detecciones_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Deteccion'
+          description: ''
+  /api/seguridad/eventos/:
+    get:
+      operationId: api_seguridad_eventos_list
+      parameters:
+      - in: query
+        name: accion
+        schema:
+          type: string
+          enum:
+          - DENEGADO
+          - PERMITIDO
+        description: |-
+          * `PERMITIDO` - Acceso Permitido
+          * `DENEGADO` - Acceso Denegado
+      - in: query
+        name: fecha_hora
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_hora__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_hora__lte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: motivo__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: placa_detectada
+        schema:
+          type: string
+      - in: query
+        name: placa_detectada__icontains
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tipo_evento
+        schema:
+          type: string
+          enum:
+          - INGRESO
+          - SALIDA
+        description: |-
+          * `INGRESO` - Ingreso Vehicular
+          * `SALIDA` - Salida Vehicular
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventoSeguridad'
+          description: ''
+    post:
+      operationId: api_seguridad_eventos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoSeguridad'
+          description: ''
+  /api/seguridad/eventos/{id}/:
+    get:
+      operationId: api_seguridad_eventos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evento de Seguridad IA.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoSeguridad'
+          description: ''
+    put:
+      operationId: api_seguridad_eventos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evento de Seguridad IA.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EventoSeguridad'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoSeguridad'
+          description: ''
+    patch:
+      operationId: api_seguridad_eventos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evento de Seguridad IA.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEventoSeguridad'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEventoSeguridad'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEventoSeguridad'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoSeguridad'
+          description: ''
+    delete:
+      operationId: api_seguridad_eventos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Evento de Seguridad IA.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/seguridad/export/visitas.csv:
+    get:
+      operationId: api_seguridad_export_visitas_csv_retrieve
+      description: Exporta la lista de visitas en formato CSV
+      summary: Exportar visitas (CSV)
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+          description: Archivo CSV con el listado de visitas
+  /api/seguridad/ia/control-vehicular/:
+    post:
+      operationId: api_seguridad_ia_control_vehicular_create
+      description: Endpoint para control de acceso vehicular desde sistemas de IA
+      summary: Control vehicular con IA
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleControlRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VehicleControlRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VehicleControlRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VehicleControlResponse'
+          description: ''
+  /api/seguridad/ia/verificar-rostro/:
+    post:
+      operationId: api_seguridad_ia_verificar_rostro_create
+      description: Endpoint para verificación de rostros desde sistemas de IA
+      summary: Verificar rostro con IA
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FaceVerificationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FaceVerificationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FaceVerificationResponse'
+          description: ''
+  /api/seguridad/vehiculos/:
+    get:
+      operationId: api_seguridad_vehiculos_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: placa
+        schema:
+          type: string
+      - in: query
+        name: placa__icontains
+        schema:
+          type: string
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: visitante
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    post:
+      operationId: api_seguridad_vehiculos_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+  /api/seguridad/vehiculos/{id}/:
+    get:
+      operationId: api_seguridad_vehiculos_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vehiculo.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    put:
+      operationId: api_seguridad_vehiculos_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vehiculo.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    patch:
+      operationId: api_seguridad_vehiculos_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vehiculo.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVehiculo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVehiculo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVehiculo'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+          description: ''
+    delete:
+      operationId: api_seguridad_vehiculos_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vehiculo.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/seguridad/visitantes/:
+    get:
+      operationId: api_seguridad_visitantes_list
+      parameters:
+      - in: query
+        name: documento
+        schema:
+          type: string
+      - in: query
+        name: nombre_completo__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: telefono
+        schema:
+          type: string
+      - in: query
+        name: telefono__icontains
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visitante'
+          description: ''
+    post:
+      operationId: api_seguridad_visitantes_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visitante'
+          description: ''
+  /api/seguridad/visitantes/{id}/:
+    get:
+      operationId: api_seguridad_visitantes_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visitante.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visitante'
+          description: ''
+    put:
+      operationId: api_seguridad_visitantes_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visitante.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Visitante'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visitante'
+          description: ''
+    patch:
+      operationId: api_seguridad_visitantes_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visitante.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVisitante'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVisitante'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVisitante'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visitante'
+          description: ''
+    delete:
+      operationId: api_seguridad_visitantes_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visitante.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/seguridad/visitas/:
+    get:
+      operationId: api_seguridad_visitas_list
+      parameters:
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum:
+          - CANCELADA
+          - EN_CURSO
+          - FINALIZADA
+          - PROGRAMADA
+        description: |-
+          * `PROGRAMADA` - Programada
+          * `EN_CURSO` - En Curso
+          * `FINALIZADA` - Finalizada
+          * `CANCELADA` - Cancelada
+      - in: query
+        name: fecha_ingreso_programado
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_ingreso_programado__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_ingreso_programado__lte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_salida_programada
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_salida_programada__gte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: fecha_salida_programada__lte
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: ingreso_real__isnull
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - in: query
+        name: salida_real__isnull
+        schema:
+          type: boolean
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: visitante
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visita'
+          description: ''
+    post:
+      operationId: api_seguridad_visitas_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Visita'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Visita'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Visita'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visita'
+          description: ''
+  /api/seguridad/visitas-abiertas/:
+    get:
+      operationId: api_seguridad_visitas_abiertas_list
+      description: Obtiene todas las visitas que han ingresado pero no han salido
+      summary: Listar visitas abiertas
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visita'
+          description: ''
+  /api/seguridad/visitas/{id}/:
+    get:
+      operationId: api_seguridad_visitas_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visita.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visita'
+          description: ''
+    put:
+      operationId: api_seguridad_visitas_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visita.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Visita'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Visita'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Visita'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visita'
+          description: ''
+    patch:
+      operationId: api_seguridad_visitas_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visita.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVisita'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVisita'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVisita'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Visita'
+          description: ''
+    delete:
+      operationId: api_seguridad_visitas_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this visita.
+        required: true
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/usuarios/dispositivos/registrar/:
+    post:
+      operationId: api_usuarios_dispositivos_registrar_create
+      description: Guarda el token de notificaciones (FCM/APNS/WebPush) para el usuario
+        actual.
+      summary: Registrar dispositivo del usuario
+      tags:
+      - Dispositivos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+            examples:
+              EjemploFCMAndroid:
+                value:
+                  token: AAA.BBB.CCC
+                  plataforma: android
+                  nombre: Mi Pixel
+                summary: Ejemplo FCM Android
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrarDispositivoResponse'
+              examples:
+                EjemploFCMAndroid:
+                  value:
+                    token: AAA.BBB.CCC
+                    plataforma: android
+                    nombre: Mi Pixel
+                  summary: Ejemplo FCM Android
+          description: ''
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+  /api/usuarios/login/:
+    post:
+      operationId: api_usuarios_login_create
+      description: Autentica con username/password y devuelve un token.
+      summary: Login (Token)
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              EjemploDeLogin:
+                value:
+                  username: admin
+                  password: admin123
+                summary: Ejemplo de login
+        required: true
+      security: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                RespuestaExitosa:
+                  value:
+                    token: "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b"
+                  summary: Token de acceso generado
+          description: ''
+        '400':
+          description: Credenciales inválidas
+  /api/usuarios/perfil/:
+    get:
+      operationId: api_usuarios_perfil_retrieve
+      description: Devuelve el perfil de residente del usuario autenticado.
+      tags:
+      - api
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidenteRead'
+          description: ''
+  /api/usuarios/reconocimiento/registrar-rostro/:
+    post:
+      operationId: api_usuarios_reconocimiento_registrar_rostro_create
+      description: Endpoint para que un usuario registre su foto en el sistema de
+        reconocimiento facial
+      summary: Registrar rostro de usuario
+      tags:
+      - api
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/FaceRegistrationRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/FaceRegistrationRequest'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FaceRegisteredResponse'
+          description: ''
+  /api/usuarios/registro/:
+    post:
+      operationId: api_usuarios_registro_create
+      description: Crea un usuario nuevo.
+      summary: Registro de usuarios
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registro'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Registro'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Registro'
+        required: true
+      security: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registro'
+          description: Usuario creado
+        '400':
+          description: Datos inválidos
+        '403':
+          description: Prohibido
+  /api/usuarios/residentes/:
+    get:
+      operationId: api_usuarios_residentes_list
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Listar residentes
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - in: query
+        name: propiedad
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: usuario
+        schema:
+          type: integer
+      - in: query
+        name: usuario__email__icontains
+        schema:
+          type: string
+      - in: query
+        name: usuario__first_name__icontains
+        schema:
+          type: string
+      - in: query
+        name: usuario__last_name__icontains
+        schema:
+          type: string
+      - in: query
+        name: usuario__username__icontains
+        schema:
+          type: string
+      tags:
+      - Residentes
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ResidenteRead'
+          description: ''
+    post:
+      operationId: api_usuarios_residentes_create
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Crear residente
+      tags:
+      - Residentes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidenteWrite'
+          description: ''
+  /api/usuarios/residentes/{id}/:
+    get:
+      operationId: api_usuarios_residentes_retrieve
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Obtener residente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this residente.
+        required: true
+      tags:
+      - Residentes
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidenteRead'
+          description: ''
+    put:
+      operationId: api_usuarios_residentes_update
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Actualizar residente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this residente.
+        required: true
+      tags:
+      - Residentes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResidenteWrite'
+        required: true
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidenteWrite'
+          description: ''
+    patch:
+      operationId: api_usuarios_residentes_partial_update
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Actualizar parcialmente residente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this residente.
+        required: true
+      tags:
+      - Residentes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedResidenteWrite'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedResidenteWrite'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedResidenteWrite'
+      security:
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResidenteWrite'
+          description: ''
+    delete:
+      operationId: api_usuarios_residentes_destroy
+      description: |-
+        CRUD de residentes (sólo admin).
+        Usa serializers distintos para lectura/escritura.
+      summary: Eliminar residente
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this residente.
+        required: true
+      tags:
+      - Residentes
+      security:
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/usuarios/setup/crear-primer-admin/:
+    post:
+      operationId: api_usuarios_setup_crear_primer_admin_create
+      description: Endpoint temporal para crear el primer superusuario (solo funciona
+        si no existen admins)
+      summary: Crear administrador inicial
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+              - username
+              - email
+              - password
+      security:
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCreatedResponse'
+          description: ''
+components:
+  schemas:
+    APIWelcomeResponse:
+      type: object
+      description: Serializer para la respuesta de la vista de bienvenida
+      properties:
+        mensaje:
+          type: string
+        version:
+          type: string
+        fecha:
+          type: string
+        estado:
+          type: string
+      required:
+      - estado
+      - fecha
+      - mensaje
+      - version
+    AccionEnum:
+      enum:
+      - PERMITIDO
+      - DENEGADO
+      type: string
+      description: |-
+        * `PERMITIDO` - Acceso Permitido
+        * `DENEGADO` - Acceso Denegado
+    AdminCreatedResponse:
+      type: object
+      description: Serializer para respuesta de creación de administrador
+      properties:
+        message:
+          type: string
+        user_id:
+          type: integer
+      required:
+      - message
+      - user_id
+    AreaComun:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 100
+        descripcion:
+          type: string
+        capacidad:
+          type: integer
+          minimum: 0
+        costo_reserva:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        horario_apertura:
+          type: string
+          format: time
+          nullable: true
+        horario_cierre:
+          type: string
+          format: time
+          nullable: true
+      required:
+      - capacidad
+      - descripcion
+      - id
+      - nombre
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required:
+      - username
+      - password
+    AuthToken:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        token:
+          type: string
+          readOnly: true
+      required:
+      - password
+      - token
+      - username
+    Aviso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 200
+        contenido:
+          type: string
+        fecha_publicacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - contenido
+      - fecha_publicacion
+      - id
+      - titulo
+    CerrarVisitasResponse:
+      type: object
+      description: Serializer para respuesta de cerrar visitas vencidas
+      properties:
+        cerradas:
+          type: integer
+          description: Número de visitas cerradas
+      required:
+      - cerradas
+    ControlAccesoRequest:
+      type: object
+      description: Serializer para control de acceso vehicular
+      properties:
+        placa:
+          type: string
+          description: Placa del vehículo
+          maxLength: 20
+      required:
+      - placa
+    ControlAccesoResponse:
+      type: object
+      description: Serializer para respuesta de control de acceso
+      properties:
+        mensaje:
+          type: string
+        permitido:
+          type: boolean
+        propiedad:
+          type: string
+      required:
+      - mensaje
+      - permitido
+    ControlSalidaRequest:
+      type: object
+      description: Serializer para control de salida vehicular
+      properties:
+        placa:
+          type: string
+          description: Placa del vehículo
+          maxLength: 20
+      required:
+      - placa
+    ControlSalidaResponse:
+      type: object
+      description: Serializer para respuesta de control de salida
+      properties:
+        mensaje:
+          type: string
+        registrado:
+          type: boolean
+      required:
+      - mensaje
+      - registrado
+    CreateStripeCheckoutRequest:
+      type: object
+      description: Serializer para crear una sesión de pago unificado con Stripe
+      properties:
+        gastos_ids:
+          type: array
+          items:
+            type: integer
+          description: Lista de IDs de gastos a pagar
+        multas_ids:
+          type: array
+          items:
+            type: integer
+          description: Lista de IDs de multas a pagar
+        reservas_ids:
+          type: array
+          items:
+            type: integer
+          description: Lista de IDs de reservas a pagar
+    CreateStripeCheckoutResponse:
+      type: object
+      description: Serializer para respuesta de crear sesión de Stripe
+      properties:
+        checkout_url:
+          type: string
+          format: uri
+          description: URL de la página de pago de Stripe
+        pago_id:
+          type: integer
+          description: ID del pago creado en nuestro sistema
+        monto_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto total a pagar
+      required:
+      - checkout_url
+      - monto_total
+      - pago_id
+    DashboardResumen:
+      type: object
+      description: Serializador para documentar la respuesta del dashboard de resumen.
+      properties:
+        visitas_hoy:
+          type: integer
+        visitas_activas:
+          type: integer
+        total_visitantes:
+          type: integer
+        eventos_pendientes:
+          type: integer
+      required:
+      - eventos_pendientes
+      - total_visitantes
+      - visitas_activas
+      - visitas_hoy
+    DashboardSeriesResponse:
+      type: object
+      description: Serializer para respuesta de series del dashboard
+      properties:
+        fecha:
+          type: string
+          format: date
+        visitas:
+          type: integer
+        eventos:
+          type: integer
+      required:
+      - eventos
+      - fecha
+      - visitas
+    Deteccion:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        camera:
+          type: string
+        matched_username:
+          type: string
+          nullable: true
+        similarity:
+          type: number
+          format: double
+          nullable: true
+        face_id:
+          type: string
+          maxLength: 100
+        ts:
+          type: string
+          format: date-time
+          readOnly: true
+        frame:
+          type: string
+          format: uri
+        raw: {}
+      required:
+      - camera
+      - id
+      - matched_username
+      - ts
+    DeviceToken:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        token:
+          type: string
+          maxLength: 255
+        platform:
+          $ref: '#/components/schemas/PlatformEnum'
+        user:
+          type: integer
+          readOnly: true
+          nullable: true
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - platform
+      - token
+      - updated_at
+      - user
+    Dispositivo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        token_dispositivo:
+          type: string
+          maxLength: 255
+        activo:
+          type: boolean
+          readOnly: true
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - activo
+      - fecha_creacion
+      - id
+      - token_dispositivo
+    Egreso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha:
+          type: string
+          format: date
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        concepto:
+          type: string
+          maxLength: 255
+        descripcion:
+          type: string
+          nullable: true
+        categoria:
+          $ref: '#/components/schemas/EgresoCategoriaEnum'
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
+        solicitud_mantenimiento:
+          type: integer
+          nullable: true
+      required:
+      - categoria
+      - concepto
+      - fecha
+      - id
+      - monto
+    EgresoCategoriaEnum:
+      enum:
+      - MANTENIMIENTO
+      - SERVICIOS
+      - SUELDOS
+      - ADMIN
+      - LIMPIEZA
+      - SEGURIDAD
+      - OTROS
+      type: string
+      description: |-
+        * `MANTENIMIENTO` - Mantenimiento y Reparaciones
+        * `SERVICIOS` - Servicios Públicos (Agua, Luz)
+        * `SUELDOS` - Sueldos y Salarios
+        * `ADMIN` - Gastos Administrativos
+        * `LIMPIEZA` - Limpieza y Jardinería
+        * `SEGURIDAD` - Seguridad
+        * `OTROS` - Otros
+    EnviarNotificacionRequest:
+      type: object
+      description: Serializer para enviar notificación demo
+      properties:
+        title:
+          type: string
+          default: Demo
+          maxLength: 100
+        body:
+          type: string
+          default: Mensaje de prueba
+          maxLength: 255
+        data:
+          type: object
+          additionalProperties: {}
+        user_id:
+          type: integer
+          description: ID del usuario específico
+    EnviarNotificacionResponse:
+      type: object
+      description: Serializer para respuesta de enviar notificación
+      properties:
+        sent:
+          type: integer
+          description: Número de notificaciones enviadas
+        note:
+          type: string
+          description: Nota adicional
+      required:
+      - sent
+    ErrorResponse:
+      type: object
+      description: Serializer para respuestas de error genéricas
+      properties:
+        error:
+          type: string
+          description: Mensaje de error
+      required:
+      - error
+    EstadoCuentaUnificado:
+      type: object
+      description: Serializer para mostrar el estado de cuenta con todas las deudas
+        pendientes
+      properties:
+        gastos_pendientes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Gasto'
+        multas_pendientes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Multa'
+        reservas_pendientes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reserva'
+        total_gastos:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_multas:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_reservas:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_general:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - gastos_pendientes
+      - multas_pendientes
+      - reservas_pendientes
+      - total_gastos
+      - total_general
+      - total_multas
+      - total_reservas
+    EstadoDeCuentaResponse:
+      type: object
+      description: Serializer para la respuesta del estado de cuenta
+      properties:
+        id:
+          type: integer
+        propiedad:
+          type: integer
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        descripcion:
+          type: string
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+        tipo_deuda:
+          type: string
+          description: 'Tipo de deuda: gasto, multa o reserva'
+      required:
+      - descripcion
+      - id
+      - monto
+      - tipo_deuda
+    EstadoPagoEnum:
+      enum:
+      - PENDIENTE
+      - PAGADO
+      - FALLIDO
+      - CANCELADO
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `PAGADO` - Pagado
+        * `FALLIDO` - Fallido
+        * `CANCELADO` - Cancelado
+    EventoSeguridad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha_hora:
+          type: string
+          format: date-time
+          readOnly: true
+        tipo_evento:
+          $ref: '#/components/schemas/TipoEventoEnum'
+        placa_detectada:
+          type: string
+          description: La matrícula tal como fue detectada por la IA.
+          maxLength: 20
+        accion:
+          $ref: '#/components/schemas/AccionEnum'
+        motivo:
+          type: string
+          description: Razón por la que se tomó la acción (ej. 'Placa no encontrada').
+          maxLength: 255
+        vehiculo_registrado:
+          type: integer
+          nullable: true
+          description: Vehículo correspondiente en la base de datos, si existe.
+      required:
+      - accion
+      - fecha_hora
+      - id
+      - motivo
+      - placa_detectada
+      - tipo_evento
+    FaceRegisteredResponse:
+      type: object
+      description: Serializer para respuesta de registro de rostro
+      properties:
+        message:
+          type: string
+        face_id:
+          type: string
+      required:
+      - face_id
+      - message
+    FaceRegistrationRequest:
+      type: object
+      description: Serializer para petición de registro de rostro
+      properties:
+        foto:
+          type: string
+          format: uri
+          description: Imagen del rostro del usuario
+      required:
+      - foto
+    FaceVerificationRequest:
+      type: object
+      description: Serializer para petición de verificación facial
+      properties:
+        foto:
+          type: string
+          format: uri
+          description: Imagen del rostro a verificar
+      required:
+      - foto
+    FaceVerificationResponse:
+      type: object
+      description: Serializer para respuesta de verificación facial
+      properties:
+        verificado:
+          type: boolean
+        usuario:
+          type: string
+        confianza:
+          type: number
+          format: double
+      required:
+      - confianza
+      - usuario
+      - verificado
+    Gasto:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        descripcion:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/GastoCategoriaEnum'
+        pagado:
+          type: boolean
+        mes:
+          type: integer
+          readOnly: true
+        anio:
+          type: integer
+          readOnly: true
+        propiedad:
+          type: integer
+      required:
+      - anio
+      - fecha_emision
+      - id
+      - mes
+      - monto
+      - propiedad
+    GastoCategoriaEnum:
+      enum:
+      - EXPENSA
+      - MANTENIMIENTO
+      - EXTRAORDINARIO
+      - SERVICIO
+      - REPARACION
+      - MEJORA
+      type: string
+      description: |-
+        * `EXPENSA` - Expensa Mensual
+        * `MANTENIMIENTO` - Mantenimiento
+        * `EXTRAORDINARIO` - Gasto Extraordinario
+        * `SERVICIO` - Servicio
+        * `REPARACION` - Reparación
+        * `MEJORA` - Mejora
+    GenerarExpensasRequest:
+      type: object
+      description: Serializer para la solicitud de generar expensas masivas
+      properties:
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto de la expensa
+        descripcion:
+          type: string
+          description: Descripción de la expensa
+          maxLength: 255
+        fecha_vencimiento:
+          type: string
+          format: date
+          description: Fecha de vencimiento del pago
+      required:
+      - descripcion
+      - fecha_vencimiento
+      - monto
+    GenerarExpensasResponse:
+      type: object
+      description: Serializer para la respuesta de generar expensas masivas
+      properties:
+        mensaje:
+          type: string
+          description: Mensaje de confirmación
+      required:
+      - mensaje
+    Ingreso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha:
+          type: string
+          format: date
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        concepto:
+          type: string
+          maxLength: 255
+        descripcion:
+          type: string
+          nullable: true
+        pago_relacionado:
+          type: integer
+          nullable: true
+      required:
+      - concepto
+      - fecha
+      - id
+      - monto
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+      - token
+    Multa:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        concepto:
+          type: string
+          maxLength: 255
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        descripcion:
+          type: string
+        pagado:
+          type: boolean
+        mes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        anio:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        propiedad:
+          type: integer
+        creado_por:
+          type: integer
+          nullable: true
+      required:
+      - anio
+      - fecha_emision
+      - id
+      - mes
+      - monto
+      - propiedad
+    NotFoundResponse:
+      type: object
+      description: Serializer para errores 404
+      properties:
+        detail:
+          type: string
+          description: Recurso no encontrado
+      required:
+      - detail
+    PagarReservaResponse:
+      type: object
+      description: Serializer para respuesta de pagar reserva
+      properties:
+        mensaje:
+          type: string
+        qr_url:
+          type: string
+          format: uri
+      required:
+      - mensaje
+    Pago:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        gasto:
+          type: integer
+          nullable: true
+        multa:
+          type: integer
+          nullable: true
+        reserva:
+          type: integer
+          nullable: true
+        usuario:
+          type: integer
+          readOnly: true
+        monto_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto total del pago unificado
+        monto_pagado:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          writeOnly: true
+        fecha_pago:
+          type: string
+          format: date-time
+          readOnly: true
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
+        estado_pago:
+          $ref: '#/components/schemas/EstadoPagoEnum'
+        id_transaccion_pasarela:
+          type: string
+          nullable: true
+          maxLength: 255
+        qr_data:
+          type: string
+          nullable: true
+      required:
+      - fecha_pago
+      - id
+      - usuario
+    PagoUnificado:
+      type: object
+      description: Serializer para mostrar pagos unificados con detalles
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        usuario:
+          type: integer
+        monto_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto total del pago unificado
+        fecha_pago:
+          type: string
+          format: date-time
+          readOnly: true
+        estado_pago:
+          $ref: '#/components/schemas/EstadoPagoEnum'
+        id_transaccion_pasarela:
+          type: string
+          nullable: true
+          maxLength: 255
+        stripe_checkout_session_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        gastos_incluidos:
+          type: integer
+          readOnly: true
+        multas_incluidas:
+          type: integer
+          readOnly: true
+        reservas_incluidas:
+          type: integer
+          readOnly: true
+        detalle_items:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - detalle_items
+      - fecha_pago
+      - gastos_incluidos
+      - id
+      - monto_total
+      - multas_incluidas
+      - reservas_incluidas
+      - usuario
+    PatchedAviso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 200
+        contenido:
+          type: string
+        fecha_publicacion:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedEgreso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha:
+          type: string
+          format: date
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        concepto:
+          type: string
+          maxLength: 255
+        descripcion:
+          type: string
+          nullable: true
+        categoria:
+          $ref: '#/components/schemas/EgresoCategoriaEnum'
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
+        solicitud_mantenimiento:
+          type: integer
+          nullable: true
+    PatchedEventoSeguridad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha_hora:
+          type: string
+          format: date-time
+          readOnly: true
+        tipo_evento:
+          $ref: '#/components/schemas/TipoEventoEnum'
+        placa_detectada:
+          type: string
+          description: La matrícula tal como fue detectada por la IA.
+          maxLength: 20
+        accion:
+          $ref: '#/components/schemas/AccionEnum'
+        motivo:
+          type: string
+          description: Razón por la que se tomó la acción (ej. 'Placa no encontrada').
+          maxLength: 255
+        vehiculo_registrado:
+          type: integer
+          nullable: true
+          description: Vehículo correspondiente en la base de datos, si existe.
+    PatchedGasto:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        descripcion:
+          type: string
+        categoria:
+          $ref: '#/components/schemas/GastoCategoriaEnum'
+        pagado:
+          type: boolean
+        mes:
+          type: integer
+          readOnly: true
+        anio:
+          type: integer
+          readOnly: true
+        propiedad:
+          type: integer
+    PatchedIngreso:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        fecha:
+          type: string
+          format: date
+          readOnly: true
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        concepto:
+          type: string
+          maxLength: 255
+        descripcion:
+          type: string
+          nullable: true
+        pago_relacionado:
+          type: integer
+          nullable: true
+    PatchedMulta:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        concepto:
+          type: string
+          maxLength: 255
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fecha_emision:
+          type: string
+          format: date
+        fecha_vencimiento:
+          type: string
+          format: date
+          nullable: true
+        descripcion:
+          type: string
+        pagado:
+          type: boolean
+        mes:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        anio:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+        propiedad:
+          type: integer
+        creado_por:
+          type: integer
+          nullable: true
+    PatchedPago:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        gasto:
+          type: integer
+          nullable: true
+        multa:
+          type: integer
+          nullable: true
+        reserva:
+          type: integer
+          nullable: true
+        usuario:
+          type: integer
+          readOnly: true
+        monto_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto total del pago unificado
+        monto_pagado:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          writeOnly: true
+        fecha_pago:
+          type: string
+          format: date-time
+          readOnly: true
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
+        estado_pago:
+          $ref: '#/components/schemas/EstadoPagoEnum'
+        id_transaccion_pasarela:
+          type: string
+          nullable: true
+          maxLength: 255
+        qr_data:
+          type: string
+          nullable: true
+    PatchedPersonalMantenimiento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 120
+        telefono:
+          type: string
+          maxLength: 30
+        especialidad:
+          type: string
+          maxLength: 120
+        activo:
+          type: boolean
+    PatchedPropiedad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_casa:
+          type: string
+          maxLength: 10
+        propietario:
+          allOf:
+          - $ref: '#/components/schemas/UserRead'
+          readOnly: true
+        metros_cuadrados:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        propietario_id:
+          type: integer
+          writeOnly: true
+    PatchedReserva:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        area_comun_nombre:
+          type: string
+          readOnly: true
+        duracion_horas:
+          type: number
+          format: double
+          readOnly: true
+        fecha_reserva:
+          type: string
+          format: date
+        hora_inicio:
+          type: string
+          format: time
+        hora_fin:
+          type: string
+          format: time
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        estado:
+          $ref: '#/components/schemas/ReservaEstadoEnum'
+        creado_en:
+          type: string
+          format: date-time
+          readOnly: true
+        area_comun:
+          type: integer
+        usuario:
+          type: integer
+    PatchedResidenteWrite:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+        username:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+        propiedad_id:
+          type: integer
+        rol:
+          $ref: '#/components/schemas/RolEnum'
+    PatchedSolicitudMantenimiento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        solicitado_por:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          readOnly: true
+        propiedad_numero:
+          type: string
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 200
+        descripcion:
+          type: string
+        estado:
+          $ref: '#/components/schemas/SolicitudMantenimientoEstadoEnum'
+        asignado_a_nombre:
+          type: string
+          readOnly: true
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+        fecha_actualizacion:
+          type: string
+          format: date-time
+          readOnly: true
+        propiedad_id:
+          type: integer
+          writeOnly: true
+        asignado_a_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+    PatchedVehiculo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        placa:
+          type: string
+          maxLength: 20
+        propiedad:
+          type: integer
+          nullable: true
+        visitante:
+          type: integer
+          nullable: true
+    PatchedVisita:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        visitante:
+          type: integer
+        propiedad:
+          type: integer
+        fecha_ingreso_programado:
+          type: string
+          format: date-time
+        fecha_salida_programada:
+          type: string
+          format: date-time
+        ingreso_real:
+          type: string
+          format: date-time
+          nullable: true
+        salida_real:
+          type: string
+          format: date-time
+          nullable: true
+    PatchedVisitante:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre_completo:
+          type: string
+          maxLength: 255
+        documento:
+          type: string
+          maxLength: 50
+        telefono:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+    PersonalMantenimiento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre:
+          type: string
+          maxLength: 120
+        telefono:
+          type: string
+          maxLength: 30
+        especialidad:
+          type: string
+          maxLength: 120
+        activo:
+          type: boolean
+      required:
+      - id
+      - nombre
+    PlatformEnum:
+      enum:
+      - android
+      - ios
+      - web
+      type: string
+      description: |-
+        * `android` - Android
+        * `ios` - iOS
+        * `web` - Web
+    Propiedad:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        numero_casa:
+          type: string
+          maxLength: 10
+        propietario:
+          allOf:
+          - $ref: '#/components/schemas/UserRead'
+          readOnly: true
+        metros_cuadrados:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+        propietario_id:
+          type: integer
+          writeOnly: true
+      required:
+      - id
+      - metros_cuadrados
+      - numero_casa
+      - propietario
+      - propietario_id
+    RegistrarDispositivoRequest:
+      type: object
+      properties:
+        token:
+          type: string
+        device_id:
+          type: string
+        plataforma:
+          $ref: '#/components/schemas/PlatformEnum'
+        nombre:
+          type: string
+        fcm_token:
+          type: string
+          writeOnly: true
+          description: Alias opcional de 'token'
+      required:
+      - token
+    RegistrarDispositivoResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        detail:
+          type: string
+      required:
+      - detail
+      - ok
+    Registro:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          maxLength: 128
+      required:
+      - password
+      - username
+    Regla:
+      type: object
+      properties:
+        codigo:
+          type: string
+          description: 'Un código único para la regla, ej: ''RESTRICCION_DEUDA_MANTENIMIENTO'''
+          maxLength: 50
+        titulo:
+          type: string
+          maxLength: 255
+        descripcion:
+          type: string
+          description: La explicación detallada de la regla.
+        categoria:
+          $ref: '#/components/schemas/ReglaCategoriaEnum'
+      required:
+      - codigo
+      - descripcion
+      - titulo
+    ReglaCategoriaEnum:
+      enum:
+      - FINANZAS
+      - SEGURIDAD
+      - MANTENIMIENTO
+      - GENERAL
+      type: string
+      description: |-
+        * `FINANZAS` - Finanzas
+        * `SEGURIDAD` - Seguridad
+        * `MANTENIMIENTO` - Mantenimiento
+        * `GENERAL` - General
+    ReporteFinancieroResponse:
+      type: object
+      description: Serializer para reporte financiero
+      properties:
+        total_ingresos:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        total_egresos:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - balance
+      - total_egresos
+      - total_ingresos
+    ReporteResumenResponse:
+      type: object
+      description: Serializer para reporte resumen
+      properties:
+        total_gastos:
+          type: integer
+        total_pagos:
+          type: integer
+        total_multas:
+          type: integer
+        ingresos_mes:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - ingresos_mes
+      - total_gastos
+      - total_multas
+      - total_pagos
+    ReporteUsoAreasComunesResponse:
+      type: object
+      description: Serializer para reporte de uso de áreas comunes
+      properties:
+        area:
+          type: string
+        total_reservas:
+          type: integer
+        ingresos_generados:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+      required:
+      - area
+      - ingresos_generados
+      - total_reservas
+    Reserva:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        area_comun_nombre:
+          type: string
+          readOnly: true
+        duracion_horas:
+          type: number
+          format: double
+          readOnly: true
+        fecha_reserva:
+          type: string
+          format: date
+        hora_inicio:
+          type: string
+          format: time
+        hora_fin:
+          type: string
+          format: time
+        costo:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+        estado:
+          $ref: '#/components/schemas/ReservaEstadoEnum'
+        creado_en:
+          type: string
+          format: date-time
+          readOnly: true
+        area_comun:
+          type: integer
+        usuario:
+          type: integer
+      required:
+      - area_comun
+      - area_comun_nombre
+      - costo
+      - creado_en
+      - duracion_horas
+      - fecha_reserva
+      - hora_fin
+      - hora_inicio
+      - id
+      - usuario
+    ReservaEstadoEnum:
+      enum:
+      - SOLICITADA
+      - CONFIRMADA
+      - PAGADA
+      - CANCELADA
+      type: string
+      description: |-
+        * `SOLICITADA` - Solicitada
+        * `CONFIRMADA` - Confirmada
+        * `PAGADA` - Pagada
+        * `CANCELADA` - Cancelada
+    ResidenteRead:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        usuario:
+          allOf:
+          - $ref: '#/components/schemas/UserRead'
+          readOnly: true
+        propiedad:
+          allOf:
+          - $ref: '#/components/schemas/Propiedad'
+          readOnly: true
+        rol:
+          $ref: '#/components/schemas/RolEnum'
+      required:
+      - id
+      - propiedad
+      - rol
+      - usuario
+    ResidenteWrite:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+        username:
+          type: string
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+        propiedad_id:
+          type: integer
+        rol:
+          $ref: '#/components/schemas/RolEnum'
+      required:
+      - propiedad_id
+      - rol
+    RolEnum:
+      enum:
+      - propietario
+      - inquilino
+      - otro
+      type: string
+      description: |-
+        * `propietario` - Propietario
+        * `inquilino` - Inquilino
+        * `otro` - Otro
+    SimularPagoResponse:
+      type: object
+      description: Serializer para respuesta de simular pago
+      properties:
+        mensaje:
+          type: string
+        pago_id:
+          type: integer
+        estado:
+          type: string
+      required:
+      - estado
+      - mensaje
+      - pago_id
+    SolicitudMantenimiento:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        solicitado_por:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          readOnly: true
+        propiedad_numero:
+          type: string
+          readOnly: true
+        titulo:
+          type: string
+          maxLength: 200
+        descripcion:
+          type: string
+        estado:
+          $ref: '#/components/schemas/SolicitudMantenimientoEstadoEnum'
+        asignado_a_nombre:
+          type: string
+          readOnly: true
+        fecha_creacion:
+          type: string
+          format: date-time
+          readOnly: true
+        fecha_actualizacion:
+          type: string
+          format: date-time
+          readOnly: true
+        propiedad_id:
+          type: integer
+          writeOnly: true
+        asignado_a_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+      required:
+      - asignado_a_nombre
+      - fecha_actualizacion
+      - fecha_creacion
+      - id
+      - propiedad_id
+      - propiedad_numero
+      - solicitado_por
+      - titulo
+    SolicitudMantenimientoEstadoEnum:
+      enum:
+      - PENDIENTE
+      - EN_PROGRESO
+      - FINALIZADA
+      - CANCELADA
+      type: string
+      description: |-
+        * `PENDIENTE` - Pendiente
+        * `EN_PROGRESO` - En progreso
+        * `FINALIZADA` - Finalizada
+        * `CANCELADA` - Cancelada
+    TipoEnum:
+      enum:
+      - ingreso
+      - salida
+      type: string
+      description: |-
+        * `ingreso` - ingreso
+        * `salida` - salida
+    TipoEventoEnum:
+      enum:
+      - INGRESO
+      - SALIDA
+      type: string
+      description: |-
+        * `INGRESO` - Ingreso Vehicular
+        * `SALIDA` - Salida Vehicular
+    TopVisitante:
+      type: object
+      description: Serializador para documentar la respuesta del endpoint de top visitantes.
+      properties:
+        visitante__nombre_completo:
+          type: string
+        visitas_count:
+          type: integer
+      required:
+      - visitante__nombre_completo
+      - visitas_count
+    UserRead:
+      type: object
+      description: Muestra la información del usuario de forma segura y legible.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+      required:
+      - id
+      - username
+    ValidationErrorResponse:
+      type: object
+      description: Serializer para errores de validación
+      properties:
+        detail:
+          type: string
+          description: Detalle del error
+      required:
+      - detail
+    VehicleControlRequest:
+      type: object
+      description: Serializer para petición de control vehicular
+      properties:
+        placa:
+          type: string
+          description: Placa del vehículo
+          maxLength: 20
+        tipo:
+          allOf:
+          - $ref: '#/components/schemas/TipoEnum'
+          default: ingreso
+          description: |-
+            Tipo de operación
+
+            * `ingreso` - ingreso
+            * `salida` - salida
+      required:
+      - placa
+    VehicleControlResponse:
+      type: object
+      description: Serializer para respuesta de control vehicular
+      properties:
+        permitido:
+          type: boolean
+        mensaje:
+          type: string
+        vehiculo_id:
+          type: integer
+      required:
+      - mensaje
+      - permitido
+      - vehiculo_id
+    Vehiculo:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        placa:
+          type: string
+          maxLength: 20
+        propiedad:
+          type: integer
+          nullable: true
+        visitante:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - placa
+    Visita:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        visitante:
+          type: integer
+        propiedad:
+          type: integer
+        fecha_ingreso_programado:
+          type: string
+          format: date-time
+        fecha_salida_programada:
+          type: string
+          format: date-time
+        ingreso_real:
+          type: string
+          format: date-time
+          nullable: true
+        salida_real:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - fecha_ingreso_programado
+      - fecha_salida_programada
+      - id
+      - propiedad
+      - visitante
+    Visitante:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        nombre_completo:
+          type: string
+          maxLength: 255
+        documento:
+          type: string
+          maxLength: 50
+        telefono:
+          type: string
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          maxLength: 254
+      required:
+      - documento
+      - id
+      - nombre_completo
+    WebhookPagoRequest:
+      type: object
+      description: Serializer para webhook de confirmación de pago
+      properties:
+        idExterno:
+          type: string
+        estado:
+          type: string
+      required:
+      - estado
+      - idExterno
+    WebhookResponse:
+      type: object
+      description: Serializer para respuesta de webhook procesado
+      properties:
+        status:
+          type: string
+          default: OK
+          description: Estado del procesamiento
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"

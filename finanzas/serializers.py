@@ -203,3 +203,47 @@ class EstadoDeCuentaResponseSerializer(serializers.Serializer):
     fecha_emision = serializers.DateField(required=False)
     fecha_vencimiento = serializers.DateField(required=False)
     tipo_deuda = serializers.CharField(help_text="Tipo de deuda: gasto, multa o reserva")
+
+# =============================================================================
+# SERIALIZERS PARA DOCUMENTACIÓN DE VISTAS PROBLEMÁTICAS
+# =============================================================================
+
+class SimpleResponseSerializer(serializers.Serializer):
+    """Serializer genérico para respuestas simples"""
+    mensaje = serializers.CharField(help_text="Mensaje de respuesta")
+    success = serializers.BooleanField(default=True, help_text="Estado de la operación")
+
+class PDFResponseSerializer(serializers.Serializer):
+    """Serializer para respuestas de archivos PDF"""
+    file = serializers.FileField(help_text="Archivo PDF generado", read_only=True)
+
+class SimularPagoRequestSerializer(serializers.Serializer):
+    """Serializer para solicitudes de simulación de pago"""
+    pago_id = serializers.IntegerField(help_text="ID del pago a simular")
+    
+class SimularPagoResponseSerializer(serializers.Serializer):
+    """Serializer para respuestas de simulación de pago"""
+    qr_data = serializers.CharField(help_text="Datos del código QR")
+    monto = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Monto del pago")
+
+class ReporteMorosidadResponseSerializer(serializers.Serializer):
+    """Serializer para reporte de morosidad"""
+    propiedades_morosas = serializers.IntegerField(help_text="Número de propiedades morosas")
+    monto_total_deuda = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Monto total adeudado")
+
+class WebhookStripeSerializer(serializers.Serializer):
+    """Serializer para webhooks de Stripe"""
+    id = serializers.CharField(help_text="ID del evento")
+    type = serializers.CharField(help_text="Tipo de evento")
+    data = serializers.DictField(help_text="Datos del evento")
+
+class PagarReservaRequestSerializer(serializers.Serializer):
+    """Serializer para pagar una reserva"""
+    reserva_id = serializers.IntegerField(help_text="ID de la reserva a pagar")
+    metodo_pago = serializers.CharField(help_text="Método de pago")
+
+class ReporteUsoAreasComunesResponseSerializer(serializers.Serializer):
+    """Serializer para reporte de uso de áreas comunes"""
+    area = serializers.CharField(help_text="Nombre del área")
+    total_reservas = serializers.IntegerField(help_text="Total de reservas")
+    ingresos_generados = serializers.DecimalField(max_digits=10, decimal_places=2, help_text="Ingresos generados")

@@ -182,7 +182,7 @@ SPECTACULAR_SETTINGS = {
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
     # Para abrir docs sin auth (opcional):
-    # 'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.AllowAny'],
     'SECURITY': [{'TokenAuth': []}],
 }
 
