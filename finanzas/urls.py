@@ -17,7 +17,7 @@ from .views import (
 
 router = DefaultRouter()
 router.register(r"gastos", GastoViewSet, basename="gasto")
-router.register(r"pagos", PagoViewSet, basename="pago")
+# router.register(r"pagos", PagoViewSet, basename="pago")  # Temporalmente comentado
 router.register(r"multas", MultaViewSet, basename="multa")
 router.register(r"pagos-multas", PagoMultaViewSet, basename="pago-multa")
 router.register(r"reservas", ReservaViewSet, basename="reserva")

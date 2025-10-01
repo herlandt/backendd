@@ -3,17 +3,27 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework import serializers
 from drf_spectacular.utils import extend_schema
+
+class APIWelcomeResponseSerializer(serializers.Serializer):
+    """Serializer para la respuesta de la vista de bienvenida"""
+    mensaje = serializers.CharField()
+    version = serializers.CharField()
+    fecha = serializers.CharField()
+    estado = serializers.CharField()
 
 @extend_schema(
     description="Vista de bienvenida de la API del Sistema de Gestión de Condominios",
-    summary="API Welcome"
+    summary="API Welcome",
+    responses={200: APIWelcomeResponseSerializer}
 )
 class APIWelcomeView(APIView):
     """
     Vista de bienvenida que proporciona información básica sobre la API
     """
     permission_classes = [AllowAny]
+    serializer_class = APIWelcomeResponseSerializer
     
     def get(self, request):
         return Response({

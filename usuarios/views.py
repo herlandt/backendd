@@ -328,7 +328,14 @@ class PerfilUsuarioView(generics.RetrieveAPIView):
 
     def get_object(self):
         # Busca el perfil de Residente asociado al usuario que hace la petición
-        return Residente.objects.get(usuario=self.request.user)
+        try:
+            return Residente.objects.get(usuario=self.request.user)
+        except Residente.DoesNotExist:
+            # Si no existe un perfil de Residente, crear uno básico
+            return Residente.objects.create(
+                usuario=self.request.user,
+                rol='otro'  # Rol por defecto
+            )
 # seguridad/views.py
 
 # ... (tus otras vistas) ...

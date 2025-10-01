@@ -293,16 +293,14 @@ class VisitaViewSet(viewsets.ModelViewSet):
 
 class VehiculoViewSet(viewsets.ModelViewSet):
     serializer_class = VehiculoSerializer
-    # Filtros avanzados
+    # Filtros avanzados - solo campos que existen en el modelo
     filterset_fields = {
         'placa': ['exact', 'icontains'],
-        'modelo': ['icontains'],
-        'color': ['exact', 'icontains'],
         'propiedad': ['exact'],
-        'tipo': ['exact'],
+        'visitante': ['exact'],
     }
-    search_fields = ['placa', 'modelo', 'color', 'propiedad__numero']
-    ordering_fields = ['placa', 'modelo', 'tipo']
+    search_fields = ['placa', 'propiedad__numero_casa']
+    ordering_fields = ['placa']
     ordering = ['placa']
 
     def get_queryset(self):

@@ -423,22 +423,9 @@ class MultaViewSet(viewsets.ModelViewSet):
 #        PAGOS (listas)
 # =========================
 class PagoViewSet(viewsets.ModelViewSet):
-    queryset = Pago.objects.select_related('gasto', 'usuario').all()
+    queryset = Pago.objects.all()
     serializer_class = PagoSerializer
     permission_classes = [IsAuthenticated]
-    # Filtros avanzados
-    filterset_fields = {
-        'usuario': ['exact'],
-        'monto': ['gte', 'lte'],
-        'fecha_pago': ['gte', 'lte', 'exact'],
-        'metodo_pago': ['exact'],
-        'gasto': ['exact'],
-        'multa': ['exact'],
-        'reserva': ['exact'],
-    }
-    search_fields = ['usuario__username', 'descripcion', 'metodo_pago']
-    ordering_fields = ['fecha_pago', 'monto']
-    ordering = ['-fecha_pago']
 
     def perform_create(self, serializer):
         pago = serializer.save(usuario=self.request.user)

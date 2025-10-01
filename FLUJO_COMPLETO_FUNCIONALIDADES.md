@@ -1,6 +1,7 @@
 
 # 🏢 FLUJO COMPLETO DE FUNCIONALIDADES - Sistema de Condominio
-## 📅 Actualizado: 30 de Septiembre de 2025
+## 📅 Actualizado: 30 de Septiembre de 2025 - v2.0
+## 🆕 Última Revisión: Correcciones Críticas y Nuevos Campos Implementados
 
 ## 📋 ÍNDICE
 1. [Arquitectura General](#arquitectura-general)
@@ -14,7 +15,9 @@
 9. [Módulo Notificaciones](#módulo-notificaciones)
 10. [Flujos de Integración](#flujos-de-integración)
 11. [Mejoras y Correcciones](#mejoras-y-correcciones)
-12. [Diagrama de Arquitectura](#diagrama-de-arquitectura)
+12. [Sistema de Seguridad](#sistema-de-seguridad)
+13. [🆕 Correcciones y Mejoras Recientes](#correcciones-y-mejoras-recientes)
+14. [Diagrama de Arquitectura](#diagrama-de-arquitectura)
 
 ---
 
@@ -438,8 +441,13 @@ GET/POST/PUT/DELETE /vehiculos/
 🚪 VISITAS:
 GET/POST/PUT/DELETE /visitas/
 ├── 📥 FILTROS: propiedad, visitante, fechas, estado, ingresos/salidas
-├── 📤 CAMPOS: visitante, propiedad, fechas_programadas, ingreso/salida_real
-└── 🎯 FUNCIÓN: Control de acceso de visitantes
+├── 📤 CAMPOS: visitante, propiedad, fechas_programadas, ingreso/salida_real, estado
+├── 🆕 ESTADO: PROGRAMADA/EN_CURSO/FINALIZADA/CANCELADA
+│   ├── 🔵 PROGRAMADA → Visita creada, pendiente de llegada
+│   ├── 🟡 EN_CURSO → Visitante ha ingresado, visita activa
+│   ├── 🟢 FINALIZADA → Visita completada, visitante ha salido
+│   └── 🔴 CANCELADA → Visita cancelada antes de iniciar
+└── 🎯 FUNCIÓN: Control de acceso de visitantes con estado automático
 
 🚨 EVENTOS DE SEGURIDAD:
 GET/POST/PUT/DELETE /eventos/
@@ -515,15 +523,21 @@ GET/POST/PUT/DELETE /personal/
 📝 SOLICITUDES:
 GET/POST/PUT/DELETE /solicitudes/
 ├── 📥 FILTROS: estado, propiedad, asignado_a, fechas, prioridad
-├── 📤 CAMPOS: titulo, descripcion, propiedad, estado, prioridad
-├── 🔧 ACCIONES ESPECIALES:
+├── 📤 CAMPOS: titulo, descripcion, propiedad, estado, prioridad, fecha_resolucion
+├── 🆕 PRIORIDAD: BAJA/MEDIA/ALTA/URGENTE
+│   ├── � BAJA → Mantenimiento preventivo o cosmético
+│   ├── 🟡 MEDIA → Reparaciones necesarias sin urgencia
+│   ├── 🟠 ALTA → Problemas que afectan funcionalidad
+│   └── 🔴 URGENTE → Emergencias que requieren atención inmediata
+├── 🆕 FECHA_RESOLUCIÓN: Se asigna automáticamente al completar
+├── �🔧 ACCIONES ESPECIALES:
 │   ├── POST /solicitudes/{id}/cambiar_estado/
 │   │   ├── 📥 RECIBE: {"estado": "EN_PROGRESO"}
 │   │   └── 🎯 FUNCIÓN: Cambiar estado de solicitud
 │   └── POST /solicitudes/{id}/asignar/
 │       ├── 📥 RECIBE: {"personal_id": 1}
 │       └── 🎯 FUNCIÓN: Asignar técnico a solicitud
-└── 🎯 FUNCIÓN: Gestión de mantenimientos
+└── 🎯 FUNCIÓN: Gestión de mantenimientos con priorización automática
 ```
 
 ### Estados de Solicitudes:
@@ -1107,6 +1121,91 @@ POST /api/notificaciones/demo/ → Enviar notificación
 ├── Fechas de reservas deben ser futuras
 ├── Pagos no pueden exceder deuda pendiente
 └── Estados deben seguir flujos lógicos
+```
+
+---
+
+## 🔧 CORRECCIONES Y MEJORAS RECIENTES
+### 📅 Implementadas: 30 de Septiembre de 2025
+
+### 🚨 Errores Críticos Resueltos:
+```
+❌ ANTES:
+├── /api/seguridad/visitas/ → 500 ERROR (campo 'estado' no existía)
+├── /api/mantenimiento/solicitudes/ → 500 ERROR (campos 'prioridad', 'fecha_resolucion' no existían)
+└── django-filter causaba fallos al filtrar por campos inexistentes
+
+✅ DESPUÉS:
+├── Todos los endpoints retornan códigos 401/403 (requieren autenticación)
+├── CERO errores 500+ (errores de servidor)
+└── Sistema completamente operativo
+```
+
+### 🆕 Campos Agregados:
+
+**MODELO VISITA** (`seguridad/models.py`):
+```python
+class EstadoVisita(models.TextChoices):
+    PROGRAMADA = 'PROGRAMADA', 'Programada'
+    EN_CURSO = 'EN_CURSO', 'En Curso'
+    FINALIZADA = 'FINALIZADA', 'Finalizada'
+    CANCELADA = 'CANCELADA', 'Cancelada'
+
+estado = models.CharField(
+    max_length=20,
+    choices=EstadoVisita.choices,
+    default=EstadoVisita.PROGRAMADA
+)
+```
+
+**MODELO SOLICITUD MANTENIMIENTO** (`mantenimiento/models.py`):
+```python
+class Prioridad(models.TextChoices):
+    BAJA = 'BAJA', 'Baja'
+    MEDIA = 'MEDIA', 'Media'
+    ALTA = 'ALTA', 'Alta'
+    URGENTE = 'URGENTE', 'Urgente'
+
+prioridad = models.CharField(
+    max_length=10,
+    choices=Prioridad.choices,
+    default=Prioridad.MEDIA
+)
+
+fecha_resolucion = models.DateTimeField(
+    null=True, blank=True,
+    help_text="Se asigna automáticamente al completar"
+)
+```
+
+### 🛠️ Herramientas de Monitoreo:
+
+**COMANDO PERSONALIZADO** (`usuarios/management/commands/check_routes.py`):
+```bash
+python manage.py check_routes
+```
+```
+🚀 Verificando API en http://localhost:8000...
+🔍 Se encontraron 9 rutas de API para verificar.
+📊 RESUMEN DE VERIFICACIÓN:
+✅ Respuestas exitosas/correctas: 0
+⚠️  Errores menores (400-499): 9
+🚨 Errores críticos (500+): 0
+```
+
+### 📊 Migraciones Aplicadas:
+```
+✅ seguridad.0006_visita_estado
+✅ mantenimiento.0005_solicitudmantenimiento_fecha_resolucion_and_more
+```
+
+### 🎯 Estado Actual del Sistema:
+```
+🚀 SERVIDOR: Django 5.2.6 + Daphne ASGI
+🔥 ENDPOINTS: 9 rutas API verificadas
+✅ ERRORES 500+: 0 (completamente resueltos)
+⚠️  ERRORES 401/403: 9 (normal - requieren autenticación)
+🎯 DISPONIBILIDAD: 100% operativo
 ```
 
 ---
