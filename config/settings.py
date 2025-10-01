@@ -190,3 +190,11 @@ AWS_REKOGNITION_COLLECTION_ID = "condominio_residentes"
 
 # --- CLAVE DE API PARA LA CÁMARA DE IA ---
 SECURITY_API_KEY = "MI_CLAVE_SUPER_SECRETA_12345"
+
+# --- CONFIGURACIÓN DE STRIPE ---
+# Claves de Stripe (deben estar en variables de entorno por seguridad)
+STRIPE_PUBLISHABLE_KEY = config('STRIPE_PUBLISHABLE_KEY')
+STRIPE_SECRET_KEY = config('STRIPE_SECRET_KEY')
+STRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET')
+
+# La configuración de stripe.api_key se hace en las vistas para evitar errores de importación
