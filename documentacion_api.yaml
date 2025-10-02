@@ -12,7 +12,10 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -67,7 +70,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -90,7 +95,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -136,7 +143,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -163,7 +172,9 @@ paths:
               $ref: '#/components/schemas/Aviso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -184,7 +195,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -216,7 +229,9 @@ paths:
               $ref: '#/components/schemas/Aviso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -247,7 +262,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedAviso'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -267,7 +284,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -310,7 +329,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -337,7 +358,9 @@ paths:
               $ref: '#/components/schemas/Propiedad'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -358,7 +381,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -390,7 +415,9 @@ paths:
               $ref: '#/components/schemas/Propiedad'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -421,7 +448,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPropiedad'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -441,7 +470,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -493,7 +524,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -519,7 +552,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -527,6 +562,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/Regla'
           description: ''
+  /api/dispositivos/registrar/:
+    post:
+      operationId: api_dispositivos_registrar_create
+      description: Guarda el token de notificaciones (FCM/APNS/WebPush) para el usuario
+        actual.
+      summary: Registrar dispositivo del usuario
+      tags:
+      - Dispositivos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+            examples:
+              EjemploFCMAndroid:
+                value:
+                  token: AAA.BBB.CCC
+                  plataforma: android
+                  nombre: Mi Pixel
+                summary: Ejemplo FCM Android
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RegistrarDispositivoRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrarDispositivoResponse'
+              examples:
+                EjemploFCMAndroid:
+                  value:
+                    token: AAA.BBB.CCC
+                    plataforma: android
+                    nombre: Mi Pixel
+                  summary: Ejemplo FCM Android
+          description: ''
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
   /api/finanzas/egresos/:
     get:
       operationId: api_finanzas_egresos_list
@@ -546,7 +630,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -573,7 +659,9 @@ paths:
               $ref: '#/components/schemas/Egreso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -594,7 +682,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -626,7 +716,9 @@ paths:
               $ref: '#/components/schemas/Egreso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -657,7 +749,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedEgreso'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -677,39 +771,12 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
-  /api/finanzas/estado-cuenta-unificado/:
-    get:
-      operationId: api_finanzas_estado_cuenta_unificado_retrieve
-      description: Obtiene todas las deudas pendientes del usuario (gastos, multas,
-        reservas) para facilitar la selección de pago
-      summary: Estado de cuenta unificado
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EstadoCuentaUnificado'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
-          description: ''
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
   /api/finanzas/estado-de-cuenta/:
     get:
       operationId: api_finanzas_estado_de_cuenta_list
@@ -719,7 +786,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -749,7 +818,9 @@ paths:
               $ref: '#/components/schemas/GenerarExpensasRequest'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -846,7 +917,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -873,7 +946,9 @@ paths:
               $ref: '#/components/schemas/Gasto'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -894,7 +969,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -926,7 +1003,9 @@ paths:
               $ref: '#/components/schemas/Gasto'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -957,7 +1036,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedGasto'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -977,10 +1058,47 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
+  /api/finanzas/gastos/{id}/registrar_pago/:
+    post:
+      operationId: api_finanzas_gastos_registrar_pago_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this gasto.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Gasto'
+          description: ''
   /api/finanzas/gastos/crear_mensual/:
     post:
       operationId: api_finanzas_gastos_crear_mensual_create
@@ -999,7 +1117,9 @@ paths:
               $ref: '#/components/schemas/Gasto'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1007,36 +1127,33 @@ paths:
               schema:
                 $ref: '#/components/schemas/Gasto'
           description: ''
-  /api/finanzas/historial-pagos-unificados/:
-    get:
-      operationId: api_finanzas_historial_pagos_unificados_list
-      description: Obtiene el historial de pagos realizados por el usuario, incluyendo
-        pagos unificados
-      summary: Historial de pagos unificados
+  /api/finanzas/gastos/pagar_en_lote/:
+    post:
+      operationId: api_finanzas_gastos_pagar_en_lote_create
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Gasto'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PagoUnificado'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
-          description: ''
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/Gasto'
           description: ''
   /api/finanzas/ingresos/:
     get:
@@ -1057,7 +1174,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1084,7 +1203,9 @@ paths:
               $ref: '#/components/schemas/Ingreso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -1105,7 +1226,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1137,7 +1260,9 @@ paths:
               $ref: '#/components/schemas/Ingreso'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1168,7 +1293,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedIngreso'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1188,7 +1315,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -1274,7 +1403,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1301,7 +1432,9 @@ paths:
               $ref: '#/components/schemas/Multa'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -1322,7 +1455,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1354,7 +1489,9 @@ paths:
               $ref: '#/components/schemas/Multa'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1385,7 +1522,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedMulta'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1405,10 +1544,75 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
+  /api/finanzas/multas/{id}/registrar_pago/:
+    post:
+      operationId: api_finanzas_multas_registrar_pago_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this multa.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Multa'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
+  /api/finanzas/multas/pagar_en_lote/:
+    post:
+      operationId: api_finanzas_multas_pagar_en_lote_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Multa'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Multa'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Multa'
+          description: ''
   /api/finanzas/pagos/:
     get:
       operationId: api_finanzas_pagos_list
@@ -1418,7 +1622,6 @@ paths:
         schema:
           type: string
           enum:
-          - CANCELADO
           - FALLIDO
           - PAGADO
           - PENDIENTE
@@ -1426,32 +1629,31 @@ paths:
           * `PENDIENTE` - Pendiente
           * `PAGADO` - Pagado
           * `FALLIDO` - Fallido
-          * `CANCELADO` - Cancelado
       - in: query
         name: fecha_pago
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: fecha_pago__gte
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: fecha_pago__lte
         schema:
           type: string
-          format: date-time
+          format: date
       - in: query
         name: gasto
         schema:
           type: integer
       - in: query
-        name: monto_total__gte
+        name: monto_pagado__gte
         schema:
           type: number
       - in: query
-        name: monto_total__lte
+        name: monto_pagado__lte
         schema:
           type: number
       - in: query
@@ -1481,7 +1683,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1506,8 +1710,11 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Pago'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -1515,11 +1722,198 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pago'
           description: ''
+  /api/finanzas/pagos-multas/:
+    get:
+      operationId: api_finanzas_pagos_multas_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PagoMulta'
+          description: ''
+    post:
+      operationId: api_finanzas_pagos_multas_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagoMulta'
+          description: ''
+  /api/finanzas/pagos-multas/{pago_multa_id}/comprobante/:
+    get:
+      operationId: api_finanzas_pagos_multas_comprobante_retrieve
+      parameters:
+      - in: path
+        name: pago_multa_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PDFResponse'
+          description: ''
+  /api/finanzas/pagos-multas/{id}/:
+    get:
+      operationId: api_finanzas_pagos_multas_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pago multa.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagoMulta'
+          description: ''
+    put:
+      operationId: api_finanzas_pagos_multas_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pago multa.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PagoMulta'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagoMulta'
+          description: ''
+    patch:
+      operationId: api_finanzas_pagos_multas_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pago multa.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPagoMulta'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPagoMulta'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPagoMulta'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagoMulta'
+          description: ''
+    delete:
+      operationId: api_finanzas_pagos_multas_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this pago multa.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/finanzas/pagos/{pago_id}/comprobante/:
     get:
       operationId: api_finanzas_pagos_comprobante_retrieve
-      description: Genera un recibo de pago en formato PDF
-      summary: Generar recibo de pago en PDF
       parameters:
       - in: path
         name: pago_id
@@ -1529,26 +1923,20 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-          description: Archivo PDF del recibo
-        '404':
-          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundResponse'
+                $ref: '#/components/schemas/PDFResponse'
           description: ''
   /api/finanzas/pagos/{pago_id}/simular/:
     post:
       operationId: api_finanzas_pagos_simular_create
-      description: Simula el pago de un gasto o reserva
-      summary: Simular pago
       parameters:
       - in: path
         name: pago_id
@@ -1557,26 +1945,28 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimularPagoResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SimularPagoResponse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SimularPagoResponse'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SimularPagoResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
           description: ''
   /api/finanzas/pagos/{id}/:
     get:
@@ -1586,12 +1976,14 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Pago.
+        description: A unique integer value identifying this pago.
         required: true
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1606,7 +1998,7 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Pago.
+        description: A unique integer value identifying this pago.
         required: true
       tags:
       - api
@@ -1621,8 +2013,11 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Pago'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1637,7 +2032,7 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Pago.
+        description: A unique integer value identifying this pago.
         required: true
       tags:
       - api
@@ -1653,7 +2048,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPago'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1668,127 +2065,82 @@ paths:
         name: id
         schema:
           type: integer
-        description: A unique integer value identifying this Pago.
+        description: A unique integer value identifying this pago.
         required: true
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
-  /api/finanzas/pagos/crear-checkout-stripe/:
-    post:
-      operationId: api_finanzas_pagos_crear_checkout_stripe_create
-      description: Crea una sesión de Stripe Checkout para pagar múltiples deudas
-        (gastos, multas, reservas) en una sola transacción
-      summary: Crear sesión de pago unificado con Stripe
-      tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CreateStripeCheckoutRequest'
-      security:
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateStripeCheckoutResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-          description: ''
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
   /api/finanzas/reportes/estado-morosidad/:
     get:
       operationId: api_finanzas_reportes_estado_morosidad_retrieve
-      description: Genera reporte de morosidad en formato PDF
-      summary: Generar reporte de morosidad (PDF)
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
-            application/pdf:
-              schema:
-                type: string
-                format: binary
-          description: Archivo PDF del reporte
-        '404':
-          content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotFoundResponse'
+                $ref: '#/components/schemas/ReporteMorosidadResponse'
           description: ''
   /api/finanzas/reportes/financiero/:
     get:
       operationId: api_finanzas_reportes_financiero_retrieve
-      description: Genera reporte financiero completo con ingresos y egresos
-      summary: Reporte financiero detallado
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReporteFinancieroResponse'
+                $ref: '#/components/schemas/SimpleResponse'
           description: ''
   /api/finanzas/reportes/resumen/:
     get:
       operationId: api_finanzas_reportes_resumen_retrieve
-      description: Resumen de estadísticas financieras del condominio
-      summary: Reporte resumen financiero
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReporteResumenResponse'
+                $ref: '#/components/schemas/SimpleResponse'
           description: ''
   /api/finanzas/reportes/uso-areas-comunes/:
     get:
-      operationId: api_finanzas_reportes_uso_areas_comunes_list
-      description: Estadísticas de uso y ingresos de áreas comunes
-      summary: Reporte de uso de áreas comunes
+      operationId: api_finanzas_reportes_uso_areas_comunes_retrieve
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ReporteUsoAreasComunesResponse'
+                $ref: '#/components/schemas/ReporteUsoAreasComunesResponse'
           description: ''
   /api/finanzas/reservas/:
     get:
@@ -1799,27 +2151,13 @@ paths:
         schema:
           type: integer
       - in: query
-        name: costo__gte
+        name: costo_total__gte
         schema:
           type: number
       - in: query
-        name: costo__lte
+        name: costo_total__lte
         schema:
           type: number
-      - in: query
-        name: estado
-        schema:
-          type: string
-          enum:
-          - CANCELADA
-          - CONFIRMADA
-          - PAGADA
-          - SOLICITADA
-        description: |-
-          * `SOLICITADA` - Solicitada
-          * `CONFIRMADA` - Confirmada
-          * `PAGADA` - Pagada
-          * `CANCELADA` - Cancelada
       - in: query
         name: fecha_reserva
         schema:
@@ -1858,7 +2196,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1885,7 +2225,9 @@ paths:
               $ref: '#/components/schemas/Reserva'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -1906,7 +2248,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1938,7 +2282,9 @@ paths:
               $ref: '#/components/schemas/Reserva'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1969,7 +2315,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedReserva'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -1989,55 +2337,15 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
-  /api/finanzas/reservas/{reserva_id}/confirmar/:
-    post:
-      operationId: api_finanzas_reservas_confirmar_create
-      description: Permite a los administradores confirmar una reserva solicitada
-      summary: Confirmar reserva
-      parameters:
-      - in: path
-        name: reserva_id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - api
-      security:
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Reserva'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
-          description: ''
   /api/finanzas/reservas/{reserva_id}/pagar/:
     post:
       operationId: api_finanzas_reservas_pagar_create
-      description: Procesa el pago de una reserva de área común
-      summary: Pagar reserva
       parameters:
       - in: path
         name: reserva_id
@@ -2046,89 +2354,85 @@ paths:
         required: true
       tags:
       - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PagarReservaRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PagarReservaRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PagarReservaRequest'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PagarReservaResponse'
-          description: ''
-        '404':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NotFoundResponse'
+                $ref: '#/components/schemas/PagarReservaRequest'
           description: ''
   /api/finanzas/webhook/pagosnet/:
     post:
       operationId: api_finanzas_webhook_pagosnet_create
-      description: Endpoint para recibir confirmaciones de pago desde la pasarela
-      summary: Webhook confirmación de pago
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WebhookPagoRequest'
+              $ref: '#/components/schemas/WebhookStripe'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/WebhookPagoRequest'
+              $ref: '#/components/schemas/WebhookStripe'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/WebhookPagoRequest'
+              $ref: '#/components/schemas/WebhookStripe'
         required: true
-      security: []
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WebhookResponse'
+                $ref: '#/components/schemas/WebhookStripe'
           description: ''
-  /api/finanzas/webhook/stripe/:
+  /api/login/:
     post:
-      operationId: api_finanzas_webhook_stripe_create
-      description: Endpoint para recibir notificaciones de Stripe sobre el estado
-        de los pagos
-      summary: Webhook de Stripe
+      operationId: api_login_create
       tags:
       - api
       requestBody:
         content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AuthToken'
           application/json:
             schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                type:
-                  type: string
-                data:
-                  type: object
-                  additionalProperties: true
-              description: Evento de webhook de Stripe
-      security: []
+              $ref: '#/components/schemas/AuthToken'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WebhookResponse'
-          description: ''
-        '400':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ValidationErrorResponse'
-          description: ''
-        '500':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: '#/components/schemas/AuthToken'
           description: ''
   /api/mantenimiento/personal/:
     get:
@@ -2165,7 +2469,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2192,7 +2498,9 @@ paths:
               $ref: '#/components/schemas/PersonalMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -2213,7 +2521,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2245,7 +2555,9 @@ paths:
               $ref: '#/components/schemas/PersonalMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2276,7 +2588,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPersonalMantenimiento'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2296,7 +2610,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -2393,7 +2709,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2420,7 +2738,9 @@ paths:
               $ref: '#/components/schemas/SolicitudMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -2441,7 +2761,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2473,7 +2795,9 @@ paths:
               $ref: '#/components/schemas/SolicitudMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2504,7 +2828,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSolicitudMantenimiento'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2524,7 +2850,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -2553,7 +2881,9 @@ paths:
               $ref: '#/components/schemas/SolicitudMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2586,7 +2916,9 @@ paths:
               $ref: '#/components/schemas/SolicitudMantenimiento'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2597,29 +2929,30 @@ paths:
   /api/notificaciones/demo/:
     post:
       operationId: api_notificaciones_demo_create
-      description: Envía una notificación de prueba a dispositivos registrados
-      summary: Enviar notificación demo
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EnviarNotificacionRequest'
+              $ref: '#/components/schemas/NotificacionResponse'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/EnviarNotificacionRequest'
+              $ref: '#/components/schemas/NotificacionResponse'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/EnviarNotificacionRequest'
+              $ref: '#/components/schemas/NotificacionResponse'
+        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EnviarNotificacionResponse'
+                $ref: '#/components/schemas/NotificacionResponse'
           description: ''
   /api/notificaciones/registrar-dispositivo/:
     post:
@@ -2639,7 +2972,9 @@ paths:
               $ref: '#/components/schemas/Dispositivo'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -2650,8 +2985,6 @@ paths:
   /api/notificaciones/token/:
     post:
       operationId: api_notificaciones_token_create
-      description: Registra un token de dispositivo para notificaciones push
-      summary: Registrar token de dispositivo
       tags:
       - api
       requestBody:
@@ -2667,63 +3000,100 @@ paths:
               $ref: '#/components/schemas/DeviceToken'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeviceToken'
-          description: ''
-  /api/seguridad/cerrar-visitas-vencidas/:
-    post:
-      operationId: api_seguridad_cerrar_visitas_vencidas_create
-      description: Cierra automáticamente las visitas que han expirado
-      summary: Cerrar visitas vencidas
-      tags:
-      - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CerrarVisitasResponse'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/CerrarVisitasResponse'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/CerrarVisitasResponse'
-        required: true
-      security:
-      - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CerrarVisitasResponse'
+                $ref: '#/components/schemas/DeviceToken'
           description: ''
-  /api/seguridad/control-acceso-vehicular/:
+  /api/registro/:
     post:
-      operationId: api_seguridad_control_acceso_vehicular_create
-      description: Controla el acceso de vehículos al condominio
-      summary: Control de acceso vehicular
+      operationId: api_registro_create
+      description: Crea un usuario nuevo.
+      summary: Registro de usuarios
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registro'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Registro'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Registro'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registro'
+          description: Usuario creado
+        '400':
+          description: Datos inválidos
+        '403':
+          description: Prohibido
+  /api/seguridad/cerrar-visitas-vencidas/:
+    post:
+      operationId: api_seguridad_cerrar_visitas_vencidas_create
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ControlAccesoRequest'
+              $ref: '#/components/schemas/SimpleOperationResponse'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ControlAccesoRequest'
+              $ref: '#/components/schemas/SimpleOperationResponse'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ControlAccesoRequest'
+              $ref: '#/components/schemas/SimpleOperationResponse'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleOperationResponse'
+          description: ''
+  /api/seguridad/control-acceso-vehicular/:
+    post:
+      operationId: api_seguridad_control_acceso_vehicular_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoResponse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoResponse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ControlAccesoResponse'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2731,92 +3101,81 @@ paths:
               schema:
                 $ref: '#/components/schemas/ControlAccesoResponse'
           description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: ''
   /api/seguridad/control-salida-vehicular/:
     post:
       operationId: api_seguridad_control_salida_vehicular_create
-      description: Registra la salida de vehículos del condominio
-      summary: Control de salida vehicular
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ControlSalidaRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/ControlSalidaRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/ControlSalidaRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ControlSalidaResponse'
+                $ref: '#/components/schemas/ControlAccesoResponse'
           description: ''
   /api/seguridad/dashboard/resumen/:
     get:
       operationId: api_seguridad_dashboard_resumen_retrieve
-      description: Devuelve estadísticas generales del sistema de seguridad.
-      summary: Resumen Dashboard Seguridad
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardResumen'
+                $ref: '#/components/schemas/DashboardResumenResponse'
           description: ''
   /api/seguridad/dashboard/series/:
     get:
-      operationId: api_seguridad_dashboard_series_list
-      description: Obtiene series temporales para gráficos del dashboard
-      summary: Series de datos del dashboard
+      operationId: api_seguridad_dashboard_series_retrieve
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardSeriesResponse'
+                $ref: '#/components/schemas/DashboardSeriesResponse'
           description: ''
   /api/seguridad/dashboard/top-visitantes/:
     get:
-      operationId: api_seguridad_dashboard_top_visitantes_list
-      description: Devuelve una lista de los 5 visitantes que más han ingresado al
-        condominio.
-      summary: Top 5 Visitantes Más Frecuentes
+      operationId: api_seguridad_dashboard_top_visitantes_retrieve
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TopVisitante'
+                $ref: '#/components/schemas/TopVisitantesResponse'
           description: ''
   /api/seguridad/detecciones/:
     get:
@@ -2837,7 +3196,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2876,18 +3237,10 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: motivo__icontains
-        schema:
-          type: string
       - name: ordering
         required: false
         in: query
         description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - in: query
-        name: placa_detectada
         schema:
           type: string
       - in: query
@@ -2910,10 +3263,16 @@ paths:
         description: |-
           * `INGRESO` - Ingreso Vehicular
           * `SALIDA` - Salida Vehicular
+      - in: query
+        name: vehiculo_registrado
+        schema:
+          type: integer
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2940,7 +3299,9 @@ paths:
               $ref: '#/components/schemas/EventoSeguridad'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -2961,7 +3322,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -2993,7 +3356,9 @@ paths:
               $ref: '#/components/schemas/EventoSeguridad'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3024,7 +3389,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedEventoSeguridad'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3044,79 +3411,80 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
   /api/seguridad/export/visitas.csv:
     get:
-      operationId: api_seguridad_export_visitas_csv_retrieve
-      description: Exporta la lista de visitas en formato CSV
-      summary: Exportar visitas (CSV)
+      operationId: api_seguridad_export_visitas.csv_retrieve
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
-            text/csv:
+            application/json:
               schema:
-                type: string
-                format: binary
-          description: Archivo CSV con el listado de visitas
+                $ref: '#/components/schemas/SimpleOperationResponse'
+          description: ''
   /api/seguridad/ia/control-vehicular/:
     post:
       operationId: api_seguridad_ia_control_vehicular_create
-      description: Endpoint para control de acceso vehicular desde sistemas de IA
-      summary: Control vehicular con IA
       tags:
       - api
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/VehicleControlRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/VehicleControlRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/VehicleControlRequest'
+              $ref: '#/components/schemas/ControlAccesoResponse'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/VehicleControlResponse'
+                $ref: '#/components/schemas/ControlAccesoResponse'
           description: ''
   /api/seguridad/ia/verificar-rostro/:
     post:
       operationId: api_seguridad_ia_verificar_rostro_create
-      description: Endpoint para verificación de rostros desde sistemas de IA
-      summary: Verificar rostro con IA
       tags:
       - api
       requestBody:
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/FaceVerificationRequest'
+              $ref: '#/components/schemas/SimpleOperationResponse'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/FaceVerificationRequest'
+              $ref: '#/components/schemas/SimpleOperationResponse'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FaceVerificationResponse'
+                $ref: '#/components/schemas/SimpleOperationResponse'
           description: ''
   /api/seguridad/vehiculos/:
     get:
@@ -3153,7 +3521,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3180,7 +3550,9 @@ paths:
               $ref: '#/components/schemas/Vehiculo'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -3201,7 +3573,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3233,7 +3607,9 @@ paths:
               $ref: '#/components/schemas/Vehiculo'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3264,7 +3640,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedVehiculo'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3284,7 +3662,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -3294,6 +3674,10 @@ paths:
       parameters:
       - in: query
         name: documento
+        schema:
+          type: string
+      - in: query
+        name: email__icontains
         schema:
           type: string
       - in: query
@@ -3323,7 +3707,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3350,7 +3736,9 @@ paths:
               $ref: '#/components/schemas/Visitante'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -3371,7 +3759,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3403,7 +3793,9 @@ paths:
               $ref: '#/components/schemas/Visitante'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3434,7 +3826,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedVisitante'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3454,7 +3848,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -3537,7 +3933,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3564,7 +3962,9 @@ paths:
               $ref: '#/components/schemas/Visita'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -3574,22 +3974,16 @@ paths:
           description: ''
   /api/seguridad/visitas-abiertas/:
     get:
-      operationId: api_seguridad_visitas_abiertas_list
-      description: Obtiene todas las visitas que han ingresado pero no han salido
-      summary: Listar visitas abiertas
+      operationId: api_seguridad_visitas_abiertas_retrieve
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Visita'
-          description: ''
+          description: No response body
   /api/seguridad/visitas/{id}/:
     get:
       operationId: api_seguridad_visitas_retrieve
@@ -3603,7 +3997,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3635,7 +4031,9 @@ paths:
               $ref: '#/components/schemas/Visita'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3666,7 +4064,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedVisita'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3686,7 +4086,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
@@ -3718,7 +4120,9 @@ paths:
               $ref: '#/components/schemas/RegistrarDispositivoRequest'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3748,13 +4152,13 @@ paths:
         content:
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/AuthToken'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/AuthToken'
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: '#/components/schemas/AuthToken'
             examples:
               EjemploDeLogin:
                 value:
@@ -3762,7 +4166,11 @@ paths:
                   password: admin123
                 summary: Ejemplo de login
         required: true
-      security: []
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '200':
           content:
@@ -3770,10 +4178,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
               examples:
-                RespuestaExitosa:
+                EjemploDeLogin:
                   value:
-                    token: "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b"
-                  summary: Token de acceso generado
+                    username: admin
+                    password: admin123
+                  summary: Ejemplo de login
           description: ''
         '400':
           description: Credenciales inválidas
@@ -3784,7 +4193,9 @@ paths:
       tags:
       - api
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3795,29 +4206,18 @@ paths:
   /api/usuarios/reconocimiento/registrar-rostro/:
     post:
       operationId: api_usuarios_reconocimiento_registrar_rostro_create
-      description: Endpoint para que un usuario registre su foto en el sistema de
-        reconocimiento facial
-      summary: Registrar rostro de usuario
+      description: |-
+        Endpoint para que un usuario autenticado suba su foto
+        y la registre en el sistema de reconocimiento facial.
       tags:
       - api
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/FaceRegistrationRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/FaceRegistrationRequest'
-        required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FaceRegisteredResponse'
-          description: ''
+          description: No response body
   /api/usuarios/registro/:
     post:
       operationId: api_usuarios_registro_create
@@ -3837,7 +4237,11 @@ paths:
             schema:
               $ref: '#/components/schemas/Registro'
         required: true
-      security: []
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
         '201':
           content:
@@ -3896,7 +4300,9 @@ paths:
       tags:
       - Residentes
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3927,7 +4333,9 @@ paths:
               $ref: '#/components/schemas/ResidenteWrite'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '201':
           content:
@@ -3952,7 +4360,9 @@ paths:
       tags:
       - Residentes
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -3988,7 +4398,9 @@ paths:
               $ref: '#/components/schemas/ResidenteWrite'
         required: true
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -4023,7 +4435,9 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedResidenteWrite'
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '200':
           content:
@@ -4047,43 +4461,28 @@ paths:
       tags:
       - Residentes
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
       responses:
         '204':
           description: No response body
   /api/usuarios/setup/crear-primer-admin/:
     post:
       operationId: api_usuarios_setup_crear_primer_admin_create
-      description: Endpoint temporal para crear el primer superusuario (solo funciona
-        si no existen admins)
-      summary: Crear administrador inicial
+      description: |-
+        Endpoint TEMPORAL y de un solo uso para crear el primer superusuario.
+        ¡¡¡ELIMINAR DESPUÉS DE USAR!!!
       tags:
       - api
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                email:
-                  type: string
-                password:
-                  type: string
-              required:
-              - username
-              - email
-              - password
       security:
+      - tokenAuth: []
       - cookieAuth: []
+      - TokenAuth: []
+      - {}
       responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdminCreatedResponse'
-          description: ''
+        '200':
+          description: No response body
 components:
   schemas:
     APIWelcomeResponse:
@@ -4111,17 +4510,6 @@ components:
       description: |-
         * `PERMITIDO` - Acceso Permitido
         * `DENEGADO` - Acceso Denegado
-    AdminCreatedResponse:
-      type: object
-      description: Serializer para respuesta de creación de administrador
-      properties:
-        message:
-          type: string
-        user_id:
-          type: integer
-      required:
-      - message
-      - user_id
     AreaComun:
       type: object
       properties:
@@ -4135,7 +4523,9 @@ components:
           type: string
         capacidad:
           type: integer
-          minimum: 0
+          maximum: 9223372036854775807
+          minimum: -9223372036854775808
+          format: int64
         costo_reserva:
           type: string
           format: decimal
@@ -4153,16 +4543,6 @@ components:
       - descripcion
       - id
       - nombre
-    LoginRequest:
-      type: object
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-      required:
-      - username
-      - password
     AuthToken:
       type: object
       properties:
@@ -4199,129 +4579,57 @@ components:
       - fecha_publicacion
       - id
       - titulo
-    CerrarVisitasResponse:
-      type: object
-      description: Serializer para respuesta de cerrar visitas vencidas
-      properties:
-        cerradas:
-          type: integer
-          description: Número de visitas cerradas
-      required:
-      - cerradas
-    ControlAccesoRequest:
-      type: object
-      description: Serializer para control de acceso vehicular
-      properties:
-        placa:
-          type: string
-          description: Placa del vehículo
-          maxLength: 20
-      required:
-      - placa
     ControlAccesoResponse:
       type: object
       description: Serializer para respuesta de control de acceso
       properties:
         mensaje:
           type: string
-        permitido:
+          description: Mensaje de respuesta
+        acceso_permitido:
           type: boolean
-        propiedad:
-          type: string
-      required:
-      - mensaje
-      - permitido
-    ControlSalidaRequest:
-      type: object
-      description: Serializer para control de salida vehicular
-      properties:
+          description: Si el acceso fue permitido
         placa:
           type: string
           description: Placa del vehículo
-          maxLength: 20
       required:
-      - placa
-    ControlSalidaResponse:
-      type: object
-      description: Serializer para respuesta de control de salida
-      properties:
-        mensaje:
-          type: string
-        registrado:
-          type: boolean
-      required:
+      - acceso_permitido
       - mensaje
-      - registrado
-    CreateStripeCheckoutRequest:
+      - placa
+    DashboardResumenResponse:
       type: object
-      description: Serializer para crear una sesión de pago unificado con Stripe
-      properties:
-        gastos_ids:
-          type: array
-          items:
-            type: integer
-          description: Lista de IDs de gastos a pagar
-        multas_ids:
-          type: array
-          items:
-            type: integer
-          description: Lista de IDs de multas a pagar
-        reservas_ids:
-          type: array
-          items:
-            type: integer
-          description: Lista de IDs de reservas a pagar
-    CreateStripeCheckoutResponse:
-      type: object
-      description: Serializer para respuesta de crear sesión de Stripe
-      properties:
-        checkout_url:
-          type: string
-          format: uri
-          description: URL de la página de pago de Stripe
-        pago_id:
-          type: integer
-          description: ID del pago creado en nuestro sistema
-        monto_total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          description: Monto total a pagar
-      required:
-      - checkout_url
-      - monto_total
-      - pago_id
-    DashboardResumen:
-      type: object
-      description: Serializador para documentar la respuesta del dashboard de resumen.
+      description: Serializer para el resumen del dashboard
       properties:
         visitas_hoy:
           type: integer
-        visitas_activas:
+          description: Visitas de hoy
+        visitantes_activos:
           type: integer
-        total_visitantes:
+          description: Visitantes actualmente en el condominio
+        eventos_mes:
           type: integer
-        eventos_pendientes:
-          type: integer
+          description: Eventos del mes
       required:
-      - eventos_pendientes
-      - total_visitantes
-      - visitas_activas
+      - eventos_mes
+      - visitantes_activos
       - visitas_hoy
     DashboardSeriesResponse:
       type: object
-      description: Serializer para respuesta de series del dashboard
+      description: Serializer para series de datos del dashboard
       properties:
-        fecha:
-          type: string
-          format: date
+        fechas:
+          type: array
+          items:
+            type: string
+            format: date
+          description: Fechas
         visitas:
-          type: integer
-        eventos:
-          type: integer
+          type: array
+          items:
+            type: integer
+          description: Número de visitas por fecha
       required:
-      - eventos
-      - fecha
+      - fechas
       - visitas
     Deteccion:
       type: object
@@ -4460,86 +4768,6 @@ components:
         * `LIMPIEZA` - Limpieza y Jardinería
         * `SEGURIDAD` - Seguridad
         * `OTROS` - Otros
-    EnviarNotificacionRequest:
-      type: object
-      description: Serializer para enviar notificación demo
-      properties:
-        title:
-          type: string
-          default: Demo
-          maxLength: 100
-        body:
-          type: string
-          default: Mensaje de prueba
-          maxLength: 255
-        data:
-          type: object
-          additionalProperties: {}
-        user_id:
-          type: integer
-          description: ID del usuario específico
-    EnviarNotificacionResponse:
-      type: object
-      description: Serializer para respuesta de enviar notificación
-      properties:
-        sent:
-          type: integer
-          description: Número de notificaciones enviadas
-        note:
-          type: string
-          description: Nota adicional
-      required:
-      - sent
-    ErrorResponse:
-      type: object
-      description: Serializer para respuestas de error genéricas
-      properties:
-        error:
-          type: string
-          description: Mensaje de error
-      required:
-      - error
-    EstadoCuentaUnificado:
-      type: object
-      description: Serializer para mostrar el estado de cuenta con todas las deudas
-        pendientes
-      properties:
-        gastos_pendientes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Gasto'
-        multas_pendientes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Multa'
-        reservas_pendientes:
-          type: array
-          items:
-            $ref: '#/components/schemas/Reserva'
-        total_gastos:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        total_multas:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        total_reservas:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        total_general:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-      required:
-      - gastos_pendientes
-      - multas_pendientes
-      - reservas_pendientes
-      - total_gastos
-      - total_general
-      - total_multas
-      - total_reservas
     EstadoDeCuentaResponse:
       type: object
       description: Serializer para la respuesta del estado de cuenta
@@ -4573,13 +4801,11 @@ components:
       - PENDIENTE
       - PAGADO
       - FALLIDO
-      - CANCELADO
       type: string
       description: |-
         * `PENDIENTE` - Pendiente
         * `PAGADO` - Pagado
         * `FALLIDO` - Fallido
-        * `CANCELADO` - Cancelado
     EventoSeguridad:
       type: object
       properties:
@@ -4613,52 +4839,6 @@ components:
       - motivo
       - placa_detectada
       - tipo_evento
-    FaceRegisteredResponse:
-      type: object
-      description: Serializer para respuesta de registro de rostro
-      properties:
-        message:
-          type: string
-        face_id:
-          type: string
-      required:
-      - face_id
-      - message
-    FaceRegistrationRequest:
-      type: object
-      description: Serializer para petición de registro de rostro
-      properties:
-        foto:
-          type: string
-          format: uri
-          description: Imagen del rostro del usuario
-      required:
-      - foto
-    FaceVerificationRequest:
-      type: object
-      description: Serializer para petición de verificación facial
-      properties:
-        foto:
-          type: string
-          format: uri
-          description: Imagen del rostro a verificar
-      required:
-      - foto
-    FaceVerificationResponse:
-      type: object
-      description: Serializer para respuesta de verificación facial
-      properties:
-        verificado:
-          type: boolean
-        usuario:
-          type: string
-        confianza:
-          type: number
-          format: double
-      required:
-      - confianza
-      - usuario
-      - verificado
     Gasto:
       type: object
       properties:
@@ -4678,16 +4858,18 @@ components:
           nullable: true
         descripcion:
           type: string
-        categoria:
-          $ref: '#/components/schemas/GastoCategoriaEnum'
         pagado:
           type: boolean
         mes:
           type: integer
-          readOnly: true
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
         anio:
           type: integer
-          readOnly: true
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
         propiedad:
           type: integer
       required:
@@ -4697,22 +4879,6 @@ components:
       - mes
       - monto
       - propiedad
-    GastoCategoriaEnum:
-      enum:
-      - EXPENSA
-      - MANTENIMIENTO
-      - EXTRAORDINARIO
-      - SERVICIO
-      - REPARACION
-      - MEJORA
-      type: string
-      description: |-
-        * `EXPENSA` - Expensa Mensual
-        * `MANTENIMIENTO` - Mantenimiento
-        * `EXTRAORDINARIO` - Gasto Extraordinario
-        * `SERVICIO` - Servicio
-        * `REPARACION` - Reparación
-        * `MEJORA` - Mejora
     GenerarExpensasRequest:
       type: object
       description: Serializer para la solicitud de generar expensas masivas
@@ -4824,26 +4990,42 @@ components:
       - mes
       - monto
       - propiedad
-    NotFoundResponse:
+    NotificacionResponse:
       type: object
-      description: Serializer para errores 404
+      description: Serializer para respuesta de notificaciones
       properties:
-        detail:
+        sent:
+          type: integer
+          description: Número de notificaciones enviadas
+        note:
           type: string
-          description: Recurso no encontrado
+          description: Nota adicional
       required:
-      - detail
-    PagarReservaResponse:
+      - sent
+    PDFResponse:
       type: object
-      description: Serializer para respuesta de pagar reserva
+      description: Serializer para respuestas de archivos PDF
       properties:
-        mensaje:
-          type: string
-        qr_url:
+        file:
           type: string
           format: uri
+          readOnly: true
+          description: Archivo PDF generado
       required:
-      - mensaje
+      - file
+    PagarReservaRequest:
+      type: object
+      description: Serializer para pagar una reserva
+      properties:
+        reserva_id:
+          type: integer
+          description: ID de la reserva a pagar
+        metodo_pago:
+          type: string
+          description: Método de pago
+      required:
+      - metodo_pago
+      - reserva_id
     Pago:
       type: object
       properties:
@@ -4862,19 +5044,13 @@ components:
         usuario:
           type: integer
           readOnly: true
-        monto_total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          description: Monto total del pago unificado
         monto_pagado:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          writeOnly: true
         fecha_pago:
           type: string
-          format: date-time
+          format: date
           readOnly: true
         comprobante:
           type: string
@@ -4892,58 +5068,50 @@ components:
       required:
       - fecha_pago
       - id
+      - monto_pagado
       - usuario
-    PagoUnificado:
+    PagoMulta:
       type: object
-      description: Serializer para mostrar pagos unificados con detalles
       properties:
         id:
           type: integer
           readOnly: true
-        usuario:
-          type: integer
-        monto_total:
+        monto_pagado:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          description: Monto total del pago unificado
         fecha_pago:
           type: string
-          format: date-time
+          format: date
           readOnly: true
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
         estado_pago:
           $ref: '#/components/schemas/EstadoPagoEnum'
         id_transaccion_pasarela:
           type: string
           nullable: true
           maxLength: 255
-        stripe_checkout_session_id:
+        qr_data:
           type: string
           nullable: true
-          maxLength: 255
-        gastos_incluidos:
+        gasto:
           type: integer
-          readOnly: true
-        multas_incluidas:
+          nullable: true
+        multa:
           type: integer
-          readOnly: true
-        reservas_incluidas:
+          nullable: true
+        reserva:
           type: integer
-          readOnly: true
-        detalle_items:
-          type: array
-          items:
-            type: object
-            additionalProperties: {}
-          readOnly: true
+          nullable: true
+        usuario:
+          type: integer
       required:
-      - detalle_items
       - fecha_pago
-      - gastos_incluidos
       - id
-      - monto_total
-      - multas_incluidas
-      - reservas_incluidas
+      - monto_pagado
       - usuario
     PatchedAviso:
       type: object
@@ -5034,16 +5202,18 @@ components:
           nullable: true
         descripcion:
           type: string
-        categoria:
-          $ref: '#/components/schemas/GastoCategoriaEnum'
         pagado:
           type: boolean
         mes:
           type: integer
-          readOnly: true
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
         anio:
           type: integer
-          readOnly: true
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
         propiedad:
           type: integer
     PatchedIngreso:
@@ -5126,19 +5296,13 @@ components:
         usuario:
           type: integer
           readOnly: true
-        monto_total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          description: Monto total del pago unificado
         monto_pagado:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          writeOnly: true
         fecha_pago:
           type: string
-          format: date-time
+          format: date
           readOnly: true
         comprobante:
           type: string
@@ -5153,6 +5317,44 @@ components:
         qr_data:
           type: string
           nullable: true
+    PatchedPagoMulta:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        monto_pagado:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+        fecha_pago:
+          type: string
+          format: date
+          readOnly: true
+        comprobante:
+          type: string
+          format: uri
+          nullable: true
+        estado_pago:
+          $ref: '#/components/schemas/EstadoPagoEnum'
+        id_transaccion_pasarela:
+          type: string
+          nullable: true
+          maxLength: 255
+        qr_data:
+          type: string
+          nullable: true
+        gasto:
+          type: integer
+          nullable: true
+        multa:
+          type: integer
+          nullable: true
+        reserva:
+          type: integer
+          nullable: true
+        usuario:
+          type: integer
     PatchedPersonalMantenimiento:
       type: object
       properties:
@@ -5196,13 +5398,6 @@ components:
         id:
           type: integer
           readOnly: true
-        area_comun_nombre:
-          type: string
-          readOnly: true
-        duracion_horas:
-          type: number
-          format: double
-          readOnly: true
         fecha_reserva:
           type: string
           format: date
@@ -5216,7 +5411,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
         estado:
           $ref: '#/components/schemas/ReservaEstadoEnum'
         creado_en:
@@ -5362,6 +5556,16 @@ components:
       required:
       - id
       - nombre
+    PlataformaEnum:
+      enum:
+      - android
+      - ios
+      - web
+      type: string
+      description: |-
+        * `android` - android
+        * `ios` - ios
+        * `web` - web
     PlatformEnum:
       enum:
       - android
@@ -5406,7 +5610,7 @@ components:
         device_id:
           type: string
         plataforma:
-          $ref: '#/components/schemas/PlatformEnum'
+          $ref: '#/components/schemas/PlataformaEnum'
         nombre:
           type: string
         fcm_token:
@@ -5477,57 +5681,36 @@ components:
         * `SEGURIDAD` - Seguridad
         * `MANTENIMIENTO` - Mantenimiento
         * `GENERAL` - General
-    ReporteFinancieroResponse:
+    ReporteMorosidadResponse:
       type: object
-      description: Serializer para reporte financiero
+      description: Serializer para reporte de morosidad
       properties:
-        total_ingresos:
+        propiedades_morosas:
+          type: integer
+          description: Número de propiedades morosas
+        monto_total_deuda:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        total_egresos:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-        balance:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto total adeudado
       required:
-      - balance
-      - total_egresos
-      - total_ingresos
-    ReporteResumenResponse:
-      type: object
-      description: Serializer para reporte resumen
-      properties:
-        total_gastos:
-          type: integer
-        total_pagos:
-          type: integer
-        total_multas:
-          type: integer
-        ingresos_mes:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-      required:
-      - ingresos_mes
-      - total_gastos
-      - total_multas
-      - total_pagos
+      - monto_total_deuda
+      - propiedades_morosas
     ReporteUsoAreasComunesResponse:
       type: object
       description: Serializer para reporte de uso de áreas comunes
       properties:
         area:
           type: string
+          description: Nombre del área
         total_reservas:
           type: integer
+          description: Total de reservas
         ingresos_generados:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Ingresos generados
       required:
       - area
       - ingresos_generados
@@ -5537,13 +5720,6 @@ components:
       properties:
         id:
           type: integer
-          readOnly: true
-        area_comun_nombre:
-          type: string
-          readOnly: true
-        duracion_horas:
-          type: number
-          format: double
           readOnly: true
         fecha_reserva:
           type: string
@@ -5558,7 +5734,6 @@ components:
           type: string
           format: decimal
           pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          readOnly: true
         estado:
           $ref: '#/components/schemas/ReservaEstadoEnum'
         creado_en:
@@ -5571,10 +5746,7 @@ components:
           type: integer
       required:
       - area_comun
-      - area_comun_nombre
-      - costo
       - creado_en
-      - duracion_horas
       - fecha_reserva
       - hora_fin
       - hora_inicio
@@ -5644,20 +5816,47 @@ components:
         * `propietario` - Propietario
         * `inquilino` - Inquilino
         * `otro` - Otro
-    SimularPagoResponse:
+    SimpleOperationResponse:
       type: object
-      description: Serializer para respuesta de simular pago
+      description: Serializer para operaciones simples
       properties:
         mensaje:
           type: string
-        pago_id:
-          type: integer
-        estado:
-          type: string
+          description: Mensaje de respuesta
+        success:
+          type: boolean
+          default: true
+          description: Estado de la operación
       required:
-      - estado
       - mensaje
-      - pago_id
+    SimpleResponse:
+      type: object
+      description: Serializer genérico para respuestas simples
+      properties:
+        mensaje:
+          type: string
+          description: Mensaje de respuesta
+        success:
+          type: boolean
+          default: true
+          description: Estado de la operación
+      required:
+      - mensaje
+    SimularPagoResponse:
+      type: object
+      description: Serializer para respuestas de simulación de pago
+      properties:
+        qr_data:
+          type: string
+          description: Datos del código QR
+        monto:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Monto del pago
+      required:
+      - monto
+      - qr_data
     SolicitudMantenimiento:
       type: object
       properties:
@@ -5718,14 +5917,6 @@ components:
         * `EN_PROGRESO` - En progreso
         * `FINALIZADA` - Finalizada
         * `CANCELADA` - Cancelada
-    TipoEnum:
-      enum:
-      - ingreso
-      - salida
-      type: string
-      description: |-
-        * `ingreso` - ingreso
-        * `salida` - salida
     TipoEventoEnum:
       enum:
       - INGRESO
@@ -5734,17 +5925,19 @@ components:
       description: |-
         * `INGRESO` - Ingreso Vehicular
         * `SALIDA` - Salida Vehicular
-    TopVisitante:
+    TopVisitantesResponse:
       type: object
-      description: Serializador para documentar la respuesta del endpoint de top visitantes.
+      description: Serializer para top visitantes
       properties:
-        visitante__nombre_completo:
+        visitante:
           type: string
-        visitas_count:
+          description: Nombre del visitante
+        total_visitas:
           type: integer
+          description: Total de visitas
       required:
-      - visitante__nombre_completo
-      - visitas_count
+      - total_visitas
+      - visitante
     UserRead:
       type: object
       description: Muestra la información del usuario de forma segura y legible.
@@ -5766,48 +5959,6 @@ components:
       required:
       - id
       - username
-    ValidationErrorResponse:
-      type: object
-      description: Serializer para errores de validación
-      properties:
-        detail:
-          type: string
-          description: Detalle del error
-      required:
-      - detail
-    VehicleControlRequest:
-      type: object
-      description: Serializer para petición de control vehicular
-      properties:
-        placa:
-          type: string
-          description: Placa del vehículo
-          maxLength: 20
-        tipo:
-          allOf:
-          - $ref: '#/components/schemas/TipoEnum'
-          default: ingreso
-          description: |-
-            Tipo de operación
-
-            * `ingreso` - ingreso
-            * `salida` - salida
-      required:
-      - placa
-    VehicleControlResponse:
-      type: object
-      description: Serializer para respuesta de control vehicular
-      properties:
-        permitido:
-          type: boolean
-        mensaje:
-          type: string
-        vehiculo_id:
-          type: integer
-      required:
-      - mensaje
-      - permitido
-      - vehiculo_id
     Vehiculo:
       type: object
       properties:
@@ -5879,25 +6030,24 @@ components:
       - documento
       - id
       - nombre_completo
-    WebhookPagoRequest:
+    WebhookStripe:
       type: object
-      description: Serializer para webhook de confirmación de pago
+      description: Serializer para webhooks de Stripe
       properties:
-        idExterno:
+        id:
           type: string
-        estado:
+          description: ID del evento
+        type:
           type: string
+          description: Tipo de evento
+        data:
+          type: object
+          additionalProperties: {}
+          description: Datos del evento
       required:
-      - estado
-      - idExterno
-    WebhookResponse:
-      type: object
-      description: Serializer para respuesta de webhook procesado
-      properties:
-        status:
-          type: string
-          default: OK
-          description: Estado del procesamiento
+      - data
+      - id
+      - type
   securitySchemes:
     cookieAuth:
       type: apiKey
