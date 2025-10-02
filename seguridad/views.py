@@ -28,6 +28,7 @@ from .serializers import (
     TopVisitantesResponseSerializer,
     SimpleOperationResponseSerializer
 )
+from auditoria.eventos import notificar_visitante_registrado, notificar_acceso_vehicular
 from .permissions import HasAPIKey
 from usuarios.models import Residente
 from usuarios.permissions import IsPropietario, IsPersonalSeguridad
@@ -377,6 +378,24 @@ class VisitanteViewSet(viewsets.ModelViewSet):
         else:
             self.permission_classes = [IsAuthenticated]
         return super().get_permissions()
+    
+    def perform_create(self, serializer):
+        """Registra el visitante y notifica a propietarios de la propiedad visitada"""
+        visitante_data = serializer.validated_data
+        nombre_completo = visitante_data.get('nombre_completo', '')
+        propiedad_visitada = visitante_data.get('propiedad_visitada')
+        
+        # Guardar el visitante
+        visitante = serializer.save()
+        
+        # Sistema nuevo: notificar a usuarios relacionados con la propiedad
+        if propiedad_visitada:
+            notificar_visitante_registrado(
+                usuario_accion=self.request.user,
+                ip_address=getattr(self.request, 'ip_address', None),
+                propiedad_id=propiedad_visitada.id,
+                nombre_visitante=nombre_completo
+            )
 
 class EventoSeguridadViewSet(viewsets.ModelViewSet):
     queryset = EventoSeguridad.objects.all()

@@ -36,6 +36,7 @@ from .services import simular_pago_qr, iniciar_pago_qr
 from usuarios.permissions import IsPropietario # Importar el nuevo permiso
 
 from auditoria.services import registrar_evento
+from auditoria.eventos import notificar_gasto_asignado, notificar_multa_asignada, notificar_pago_recibido
 
 def _ip(request):
     return getattr(request, "ip_address", request.META.get("REMOTE_ADDR"))
@@ -108,17 +109,23 @@ class GastoViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Asegurar que el gasto sea creado por el administrador que lo registra
-        registrar_evento(
-            usuario=self.request.user,
-            accion="Creación de Gasto",
-            ip_address=_ip(self.request),
-            descripcion=format_description({
-                "gasto_creado": True,
-                "monto": str(serializer.validated_data.get('monto', '')),
-                "propiedad_id": serializer.validated_data.get('propiedad', {}).id if serializer.validated_data.get('propiedad') else None
-            })
-        )
-        serializer.save()
+        gasto_data = serializer.validated_data
+        propiedad = gasto_data.get('propiedad')
+        monto = str(gasto_data.get('monto', ''))
+        descripcion = gasto_data.get('descripcion', '')
+        
+        # Guardar el gasto
+        gasto = serializer.save()
+        
+        # Sistema nuevo: notificar automáticamente a usuarios relacionados
+        if propiedad:
+            notificar_gasto_asignado(
+                usuario_accion=self.request.user,
+                ip_address=_ip(self.request),
+                propiedad_id=propiedad.id,
+                monto=monto,
+                descripcion=descripcion
+            )
 
     @action(detail=False, methods=['post'], url_path='crear_mensual', permission_classes=[IsAdminUser])
     def crear_mensual(self, request):
@@ -329,20 +336,23 @@ class MultaViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Asegurar que la multa sea creada por el administrador que la registra
+        multa_data = serializer.validated_data
+        propiedad = multa_data.get('propiedad')
+        monto = str(multa_data.get('monto', ''))
+        concepto = multa_data.get('concepto', '')
+        
+        # Guardar la multa
         multa = serializer.save(creado_por=self.request.user)
-        # --- CORRECCIÓN DE AUDITORÍA ---
-        registrar_evento(
-            usuario=self.request.user,
-            accion="Creación de Multa",
-            ip_address=_ip(self.request),
-            descripcion=format_description({
-                "multa_id": multa.id,
-                "propiedad_id": multa.propiedad.id,
-                "monto": str(multa.monto),
-                "motivo": multa.motivo,
-            })
-        )
-        # --- FIN CORRECCIÓN ---
+        
+        # Sistema nuevo: notificar automáticamente a usuarios relacionados
+        if propiedad:
+            notificar_multa_asignada(
+                usuario_accion=self.request.user,
+                ip_address=_ip(self.request),
+                propiedad_id=propiedad.id,
+                monto=monto,
+                concepto=concepto
+            )
 
     @action(detail=True, methods=['post'], url_path='registrar_pago')
     def registrar_pago(self, request, pk=None):
@@ -362,17 +372,14 @@ class MultaViewSet(viewsets.ModelViewSet):
             multa.pagado = True
             multa.save(update_fields=['pagado'])
             
-            # --- CORRECCIÓN DE AUDITORÍA ---
-            registrar_evento(
-                usuario=request.user,
-                accion="Registro de Pago de Multa Individual",
-                ip_address=_ip(request),
-                descripcion=format_description({
-                    "pago_multa_id": pago.id, "multa_id": multa.id,
-                    "monto_pagado": str(monto)
-                })
-            )
-            # --- FIN CORRECCIÓN ---
+            # Sistema nuevo: notificar pago recibido
+            if multa.propiedad:
+                notificar_pago_recibido(
+                    usuario_accion=request.user,
+                    ip_address=_ip(request),
+                    propiedad_id=multa.propiedad.id,
+                    monto=str(monto)
+                )
 
         return Response(PagoMultaSerializer(pago).data, status=status.HTTP_201_CREATED)
 

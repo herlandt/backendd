@@ -43,8 +43,8 @@ urlpatterns = [
     path('api/condominio/', include('condominio.urls')),
     path('api/finanzas/', include('finanzas.urls')),
     path("api/seguridad/", include(("seguridad.urls", "seguridad"), namespace="seguridad")),
-
     path('api/mantenimiento/', include('mantenimiento.urls')), # <-- AHORA TIENE SU PREFIJO
+    path('api/auditoria/', include('auditoria.urls')), # <-- NUEVO: URLs de auditoría
 
     # URLs para la API navegable
     path('api-auth/', include('rest_framework.urls')),
