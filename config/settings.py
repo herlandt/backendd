@@ -12,12 +12,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 ALLOWED_HOSTS = [
-    '10.0.2.2', 
+    '10.0.2.2',       # Android Emulator (AVD)
+    '10.0.2.15',      # Android Emulator alternativo
+    '10.0.2.16',      # Android Emulator host gateway
     'localhost', 
     '127.0.0.1', 
     '192.168.0.18',
-    '192.168.0.5',    # Nueva IP detectada
-    '172.18.128.1',   # Nueva IP detectada
+    '192.168.0.5',    # Tu IP local detectada
+    '172.18.128.1',   # Tu IP alternativa detectada
     '0.0.0.0',        # Permite todas las IPs (solo para desarrollo)
 ]
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -107,15 +109,19 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # --- CORS ---
-# --- CORS ---
-# --- CORS ---
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000", # Para tu desarrollo local
+    "http://localhost:3000",    # Para desarrollo React/Next.js
+    "http://localhost:5173",    # Para desarrollo con Vite/React
+    "http://127.0.0.1:5173",    # Alternativa localhost
+    "http://127.0.0.1:3000",    # Alternativa localhost
 ]
 
 # --- CSRF ---
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
 ]
 
 
