@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test CORS - Smart Condominium</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #dcfce7;
+            border: 1px solid #22c55e;
+            color: #166534;
+        }
+        .error {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        .credentials {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .endpoint-list {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        .header-info {
+            font-size: 14px;
+            color: #64748b;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Test CORS - Smart Condominium API</h1>
+        
+        <div class="header-info">
+            <strong>URL Backend:</strong> http://127.0.0.1:8000/api/<br>
+            <strong>Estado:</strong> <span id="server-status">Verificando...</span><br>
+            <strong>Fecha:</strong> <span id="current-date"></span>
+        </div>
+
+        <div class="credentials">
+            <h3>🔑 Credenciales de Prueba</h3>
+            <strong>Usuario Recomendado:</strong> residente1<br>
+            <strong>Contraseña:</strong> isaelOrtiz2<br>
+            <strong>Rol:</strong> Residente con acceso completo
+        </div>
+
+        <!-- Test 1: Conectividad Básica -->
+        <div class="test-section">
+            <h3>🔍 Test 1: Conectividad Básica</h3>
+            <p>Verifica que el backend responda y CORS esté configurado</p>
+            <button class="test-button" onclick="testConnectivity()">Probar Conectividad</button>
+            <div id="connectivity-result"></div>
+        </div>
+
+        <!-- Test 2: Login -->
+        <div class="test-section">
+            <h3>🔐 Test 2: Autenticación</h3>
+            <p>Prueba el login con usuario de prueba</p>
+            <button class="test-button" onclick="testLogin()">Probar Login</button>
+            <button class="test-button" onclick="clearToken()" style="background: #ef4444;">Limpiar Token</button>
+            <div id="login-result"></div>
+        </div>
+
+        <!-- Test 3: Endpoints Autenticados -->
+        <div class="test-section">
+            <h3>👤 Test 3: Endpoints Autenticados</h3>
+            <p>Prueba endpoints que requieren autenticación</p>
+            <button class="test-button" onclick="testProfile()">Obtener Perfil</button>
+            <button class="test-button" onclick="testFinanzas()">Obtener Finanzas</button>
+            <button class="test-button" onclick="testAvisos()">Obtener Avisos</button>
+            <div id="auth-endpoints-result"></div>
+        </div>
+
+        <!-- Test 4: Métodos HTTP -->
+        <div class="test-section">
+            <h3>🔄 Test 4: Métodos HTTP</h3>
+            <p>Verifica que todos los métodos HTTP funcionen</p>
+            <button class="test-button" onclick="testHttpMethods()">Probar Métodos</button>
+            <div id="http-methods-result"></div>
+        </div>
+
+        <!-- Lista de Endpoints -->
+        <div class="endpoint-list">
+            <h3>📡 Endpoints Disponibles</h3>
+            <ul>
+                <li><strong>POST</strong> /api/login/ - Autenticación</li>
+                <li><strong>GET</strong> /api/usuarios/perfil/ - Perfil del usuario</li>
+                <li><strong>GET</strong> /api/finanzas/gastos/ - Gastos del usuario</li>
+                <li><strong>GET</strong> /api/condominio/avisos/ - Avisos del condominio</li>
+                <li><strong>GET</strong> /api/seguridad/visitas/ - Visitas</li>
+                <li><strong>GET</strong> /api/mantenimiento/solicitudes/ - Solicitudes</li>
+                <li><strong>GET</strong> /api/notificaciones/ - Notificaciones</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        
+        // Actualizar fecha
+        document.getElementById('current-date').textContent = new Date().toLocaleString();
+        
+        // Función para mostrar resultados
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        // Test 1: Conectividad básica
+        async function testConnectivity() {
+            showResult('connectivity-result', '🔄 Probando conectividad...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/`);
+                const data = await response.text();
+                
+                if (response.ok) {
+                    showResult('connectivity-result', 
+                        `✅ ÉXITO: Conectividad funcionando\n` +
+                        `Status: ${response.status}\n` +
+                        `CORS: Headers correctos\n` +
+                        `Respuesta: ${data.substring(0, 200)}...`, 'success');
+                    
+                    document.getElementById('server-status').innerHTML = 
+                        '<span style="color: #22c55e;">✅ ONLINE</span>';
+                } else {
+                    showResult('connectivity-result', 
+                        `⚠️ Respuesta inesperada\nStatus: ${response.status}\nDatos: ${data}`, 'error');
+                }
+            } catch (error) {
+                showResult('connectivity-result', 
+                    `❌ ERROR: ${error.message}\n\n` +
+                    `Posibles causas:\n` +
+                    `- Backend no está corriendo\n` +
+                    `- CORS no configurado\n` +
+                    `- Firewall bloqueando`, 'error');
+                
+                document.getElementById('server-status').innerHTML = 
+                    '<span style="color: #ef4444;">❌ OFFLINE</span>';
+            }
+        }
+
+        // Test 2: Login
+        async function testLogin() {
+            showResult('login-result', '🔄 Probando login...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'residente1',
+                        password: 'isaelOrtiz2'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.token) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user || {}));
+                    
+                    showResult('login-result', 
+                        `✅ LOGIN EXITOSO\n` +
+                        `Token obtenido: ${data.token.substring(0, 20)}...\n` +
+                        `Usuario: ${data.user?.username || 'N/A'}\n` +
+                        `Email: ${data.user?.email || 'N/A'}\n` +
+                        `Token guardado en localStorage`, 'success');
+                } else {
+                    showResult('login-result', 
+                        `❌ LOGIN FALLIDO\n` +
+                        `Status: ${response.status}\n` +
+                        `Error: ${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('login-result', 
+                    `❌ ERROR DE LOGIN: ${error.message}`, 'error');
+            }
+        }
+
+        // Limpiar token
+        function clearToken() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            showResult('login-result', '🧹 Token eliminado del localStorage', 'info');
+        }
+
+        // Test 3: Perfil
+        async function testProfile() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showResult('auth-endpoints-result', 
+                    '❌ No hay token. Haz login primero.', 'error');
+                return;
+            }
+
+            showResult('auth-endpoints-result', '🔄 Obteniendo perfil...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/usuarios/perfil/`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('auth-endpoints-result', 
+                        `✅ PERFIL OBTENIDO\n` +
+                        `${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('auth-endpoints-result', 
+                        `❌ ERROR AL OBTENER PERFIL\n` +
+                        `Status: ${response.status}\n` +
+                        `${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('auth-endpoints-result', 
+                    `❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        // Test finanzas
+        async function testFinanzas() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showResult('auth-endpoints-result', 
+                    '❌ No hay token. Haz login primero.', 'error');
+                return;
+            }
+
+            showResult('auth-endpoints-result', '🔄 Obteniendo finanzas...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/finanzas/gastos/`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('auth-endpoints-result', 
+                        `✅ FINANZAS OBTENIDAS\n` +
+                        `Gastos encontrados: ${data.length || 0}\n` +
+                        `${JSON.stringify(data.slice(0, 2), null, 2)}`, 'success');
+                } else {
+                    showResult('auth-endpoints-result', 
+                        `❌ ERROR AL OBTENER FINANZAS\n` +
+                        `Status: ${response.status}\n` +
+                        `${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('auth-endpoints-result', 
+                    `❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        // Test avisos
+        async function testAvisos() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showResult('auth-endpoints-result', 
+                    '❌ No hay token. Haz login primero.', 'error');
+                return;
+            }
+
+            showResult('auth-endpoints-result', '🔄 Obteniendo avisos...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/condominio/avisos/`, {
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('auth-endpoints-result', 
+                        `✅ AVISOS OBTENIDOS\n` +
+                        `Avisos encontrados: ${data.length || 0}\n` +
+                        `${JSON.stringify(data.slice(0, 2), null, 2)}`, 'success');
+                } else {
+                    showResult('auth-endpoints-result', 
+                        `❌ ERROR AL OBTENER AVISOS\n` +
+                        `Status: ${response.status}\n` +
+                        `${JSON.stringify(data, null, 2)}`, 'error');
+                }
+            } catch (error) {
+                showResult('auth-endpoints-result', 
+                    `❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        // Test métodos HTTP
+        async function testHttpMethods() {
+            showResult('http-methods-result', '🔄 Probando métodos HTTP...', 'info');
+            
+            const methods = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'];
+            const results = [];
+            
+            for (const method of methods) {
+                try {
+                    const response = await fetch(`${API_BASE}/`, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    results.push(`${method}: ${response.status} ${response.statusText}`);
+                } catch (error) {
+                    results.push(`${method}: ERROR - ${error.message}`);
+                }
+            }
+            
+            showResult('http-methods-result', 
+                `✅ MÉTODOS HTTP PROBADOS:\n${results.join('\n')}`, 'success');
+        }
+
+        // Auto-test de conectividad al cargar
+        window.onload = function() {
+            setTimeout(testConnectivity, 1000);
+        };
+    </script>
+</body>
+</html>

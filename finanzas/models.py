@@ -93,12 +93,19 @@ class Pago(models.Model):
     
     ESTADO_CHOICES = [
         ('PENDIENTE', 'Pendiente'),
+        ('COMPLETADO', 'Completado'),
         ('PAGADO', 'Pagado'),
         ('FALLIDO', 'Fallido'),
     ]
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
     estado_pago = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='PENDIENTE')
     id_transaccion_pasarela = models.CharField(max_length=255, blank=True, null=True, unique=True)
     qr_data = models.TextField(blank=True, null=True)
+    
+    # Campos de Stripe
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)
 
 
     def __str__(self):

@@ -168,32 +168,240 @@ class IAControlVehicularView(APIView):
     serializer_class = ControlAccesoResponseSerializer  # Para documentación
     
     def _registrar_evento(self, tipo_evento, placa, accion, motivo, vehiculo=None):
-        EventoSeguridad.objects.create(tipo_evento=tipo_evento, placa_detectada=placa, accion=accion, motivo=motivo, vehiculo_registrado=vehiculo)
+        """Registra el evento en la base de datos"""
+        return EventoSeguridad.objects.create(
+            tipo_evento=tipo_evento, 
+            placa_detectada=placa, 
+            accion=accion, 
+            motivo=motivo, 
+            vehiculo_registrado=vehiculo
+        )
 
     def post(self, request, *args, **kwargs):
-        placa = request.data.get('placa')
-        tipo_evento = request.data.get('tipo', 'ingreso').upper()
+        """
+        Endpoint para control vehicular por IA
+        Recibe: {"placa": "ABC123", "tipo": "INGRESO"}
+        Responde con información detallada del acceso
+        """
+        placa = request.data.get('placa', '').strip().upper()
+        tipo_evento = request.data.get('tipo', 'INGRESO').upper()
+        timestamp = timezone.now()
 
+        # Validaciones
         if not placa:
-            return Response({"error": "El campo 'placa' es requerido."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+                "error": "El campo 'placa' es requerido.",
+                "timestamp": timestamp.isoformat(),
+                "accion": "DENEGADO"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
+        if tipo_evento not in ['INGRESO', 'SALIDA']:
+            return Response({
+                "error": "El campo 'tipo' debe ser 'INGRESO' o 'SALIDA'.",
+                "timestamp": timestamp.isoformat(),
+                "accion": "DENEGADO"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Buscar vehículo en la base de datos
         vehiculo = Vehiculo.objects.filter(placa__iexact=placa).first()
-
-        if tipo_evento == 'INGRESO':
-            handler_view = ControlAccesoVehicularView()
-            response = handler_view._handle_ingreso(placa)
-        elif tipo_evento == 'SALIDA':
-            handler_view = ControlSalidaVehicularView()
-            response = handler_view._handle_salida(placa)
-        else:
-            return Response({"error": "El campo 'tipo' debe ser 'INGRESO' o 'SALIDA'."}, status=status.HTTP_400_BAD_REQUEST)
-
-        if response.status_code == 200:
-            self._registrar_evento(tipo_evento, placa, EventoSeguridad.AccionTomada.PERMITIDO, response.data.get('detail'), vehiculo)
-        else:
-            self._registrar_evento(tipo_evento, placa, EventoSeguridad.AccionTomada.DENEGADO, response.data.get('detail'), vehiculo)
         
-        return response
+        # Determinar información del vehículo
+        vehiculo_info = None
+        acceso_permitido = False
+        motivo = ""
+        status_code = status.HTTP_403_FORBIDDEN
+        
+        if vehiculo:
+            if vehiculo.propiedad:
+                # Vehículo de residente - siempre permitido
+                vehiculo_info = {
+                    "tipo": "RESIDENTE",
+                    "propiedad": vehiculo.propiedad.numero_casa,
+                    "propiedad_id": vehiculo.propiedad.id,
+                    "autorizado": True
+                }
+                acceso_permitido = True
+                motivo = f"Vehículo autorizado para {vehiculo.propiedad.numero_casa}"
+                status_code = status.HTTP_200_OK
+                
+            elif vehiculo.visitante:
+                # Vehículo de visitante - revisar visitas vigentes
+                visita_vigente = Visita.objects.filter(
+                    visitante=vehiculo.visitante,
+                    ingreso_real__isnull=True,
+                    fecha_ingreso_programado__lte=timestamp,
+                    fecha_salida_programada__gte=timestamp
+                ).first()
+                
+                if visita_vigente:
+                    vehiculo_info = {
+                        "tipo": "VISITANTE", 
+                        "visitante": vehiculo.visitante.nombre_completo,
+                        "propiedad": visita_vigente.propiedad.numero_casa,
+                        "autorizado": True
+                    }
+                    acceso_permitido = True
+                    motivo = f"Visitante autorizado para {visita_vigente.propiedad.numero_casa}"
+                    status_code = status.HTTP_200_OK
+                    
+                    # Marcar ingreso real si es INGRESO
+                    if tipo_evento == 'INGRESO':
+                        visita_vigente.ingreso_real = timestamp
+                        visita_vigente.save()
+                else:
+                    vehiculo_info = {
+                        "tipo": "VISITANTE",
+                        "visitante": vehiculo.visitante.nombre_completo,
+                        "autorizado": False
+                    }
+                    motivo = "Visitante sin visita programada vigente"
+                    
+            else:
+                # Vehículo registrado pero sin asignar
+                vehiculo_info = {
+                    "tipo": "SIN_ASIGNAR",
+                    "autorizado": False
+                }
+                motivo = f"Vehículo {placa} registrado pero sin autorización específica"
+        else:
+            # Vehículo no registrado
+            vehiculo_info = {
+                "tipo": "NO_REGISTRADO",
+                "autorizado": False
+            }
+            motivo = f"Placa '{placa}' no encontrada en el sistema"
+
+        # Determinar acción para el registro
+        accion = EventoSeguridad.AccionTomada.PERMITIDO if acceso_permitido else EventoSeguridad.AccionTomada.DENEGADO
+
+        # Registrar evento
+        evento = self._registrar_evento(tipo_evento, placa, accion, motivo, vehiculo)
+
+        # Preparar respuesta detallada
+        response_data = {
+            "evento_id": evento.id,
+            "timestamp": timestamp.isoformat(),
+            "placa": placa,
+            "tipo_evento": tipo_evento,
+            "accion": accion,
+            "acceso_permitido": acceso_permitido,
+            "motivo": motivo,
+            "vehiculo": vehiculo_info,
+            "mensaje": f"{'✅ Acceso permitido' if acceso_permitido else '❌ Acceso denegado'} para {placa}"
+        }
+
+        # Notificar si es necesario (para auditoría)
+        try:
+            if vehiculo and vehiculo.propiedad:
+                notificar_acceso_vehicular(
+                    usuario_accion=None,  # Sistema IA
+                    ip_address=request.META.get('REMOTE_ADDR', '127.0.0.1'),
+                    placa=placa,
+                    propiedad_id=vehiculo.propiedad.id,
+                    permitido=acceso_permitido
+                )
+        except Exception as e:
+            # No fallar si la notificación falla
+            print(f"Warning: Error en notificación: {e}")
+
+        # Devolver respuesta con el código de estado apropiado
+        return Response(response_data, status=status_code)
+
+class GateDashboardView(APIView):
+    """
+    Endpoint para el dashboard del gate
+    Proporciona información en tiempo real para la interfaz web
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        """Obtiene el estado actual del sistema de gate"""
+        from django.db.models import Count
+        from datetime import timedelta
+        
+        ahora = timezone.now()
+        hoy = ahora.date()
+        ayer = hoy - timedelta(days=1)
+        
+        # Estadísticas de hoy
+        eventos_hoy = EventoSeguridad.objects.filter(fecha_hora__date=hoy)
+        eventos_permitidos_hoy = eventos_hoy.filter(accion='PERMITIDO').count()
+        eventos_denegados_hoy = eventos_hoy.filter(accion='DENEGADO').count()
+        
+        # Últimos eventos (últimos 10)
+        ultimos_eventos = EventoSeguridad.objects.select_related('vehiculo_registrado', 'vehiculo_registrado__propiedad').order_by('-fecha_hora')[:10]
+        
+        eventos_data = []
+        for evento in ultimos_eventos:
+            vehiculo_info = "No registrado"
+            if evento.vehiculo_registrado:
+                if evento.vehiculo_registrado.propiedad:
+                    vehiculo_info = f"Residente - {evento.vehiculo_registrado.propiedad.numero_casa}"
+                elif evento.vehiculo_registrado.visitante:
+                    vehiculo_info = f"Visitante - {evento.vehiculo_registrado.visitante.nombre_completo}"
+                else:
+                    vehiculo_info = "Vehículo sin asignar"
+            
+            eventos_data.append({
+                "id": evento.id,
+                "timestamp": evento.fecha_hora.isoformat(),
+                "placa": evento.placa_detectada,
+                "tipo_evento": evento.tipo_evento,
+                "accion": evento.accion,
+                "motivo": evento.motivo,
+                "vehiculo_info": vehiculo_info,
+                "tiempo_relativo": self._tiempo_relativo(evento.fecha_hora, ahora)
+            })
+        
+        # Estadísticas por placas más frecuentes
+        placas_frecuentes = (EventoSeguridad.objects
+                           .filter(fecha_hora__date=hoy)
+                           .values('placa_detectada')
+                           .annotate(total=Count('id'))
+                           .order_by('-total')[:5])
+        
+        # Vehículos registrados
+        total_vehiculos = Vehiculo.objects.count()
+        vehiculos_residentes = Vehiculo.objects.filter(propiedad__isnull=False).count()
+        vehiculos_visitantes = Vehiculo.objects.filter(visitante__isnull=False).count()
+        
+        response_data = {
+            "timestamp": ahora.isoformat(),
+            "estadisticas_hoy": {
+                "total_eventos": eventos_hoy.count(),
+                "accesos_permitidos": eventos_permitidos_hoy,
+                "accesos_denegados": eventos_denegados_hoy,
+                "porcentaje_exito": round((eventos_permitidos_hoy / max(eventos_hoy.count(), 1)) * 100, 2)
+            },
+            "vehiculos_registrados": {
+                "total": total_vehiculos,
+                "residentes": vehiculos_residentes,
+                "visitantes": vehiculos_visitantes,
+                "sin_asignar": total_vehiculos - vehiculos_residentes - vehiculos_visitantes
+            },
+            "ultimos_eventos": eventos_data,
+            "placas_frecuentes_hoy": list(placas_frecuentes),
+            "sistema": {
+                "estado": "ACTIVO",
+                "version": "1.0.0",
+                "modo": "SIMULACION" if 'test_video' in str(request.path) else "PRODUCCION"
+            }
+        }
+        
+        return Response(response_data)
+    
+    def _tiempo_relativo(self, fecha_evento, ahora):
+        """Convierte timestamp a tiempo relativo legible"""
+        diff = ahora - fecha_evento
+        
+        if diff.total_seconds() < 60:
+            return f"Hace {int(diff.total_seconds())} segundos"
+        elif diff.total_seconds() < 3600:
+            return f"Hace {int(diff.total_seconds() / 60)} minutos"
+        elif diff.total_seconds() < 86400:
+            return f"Hace {int(diff.total_seconds() / 3600)} horas"
+        else:
+            return f"Hace {diff.days} días"
 
 class VerificarRostroView(APIView):
     permission_classes = [HasAPIKey]

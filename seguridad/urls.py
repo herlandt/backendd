@@ -18,6 +18,7 @@ from .views import (
     IAControlVehicularView,
     VerificarRostroView,
     DeteccionListView,
+    GateDashboardView,  # 🆕 Nueva vista
 )
 
 router = DefaultRouter()
@@ -37,6 +38,7 @@ urlpatterns = [
     path("dashboard/top-visitantes/", DashboardTopVisitantesView.as_view(), name="dashboard-top-visitantes"),
     path('ia/control-vehicular/', IAControlVehicularView.as_view(), name='ia-control-vehicular'),
     path('ia/verificar-rostro/', VerificarRostroView.as_view(), name='ia-verificar-rostro'),
+    path('gate/dashboard/', GateDashboardView.as_view(), name='gate-dashboard'),  # 🆕 Nueva URL
     path("detecciones/", DeteccionListView.as_view(), name="detecciones"),
     path('', include(router.urls)),
 ]

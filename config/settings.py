@@ -110,11 +110,47 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # --- CORS ---
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",    # Para desarrollo React/Next.js
-    "http://localhost:5173",    # Para desarrollo con Vite/React
-    "http://127.0.0.1:5173",    # Alternativa localhost
-    "http://127.0.0.1:3000",    # Alternativa localhost
+    "http://localhost:3000",      # Para desarrollo React/Next.js
+    "http://localhost:5173",      # Para desarrollo con Vite/React
+    "http://127.0.0.1:5173",      # Alternativa localhost
+    "http://127.0.0.1:3000",      # Alternativa localhost
+    "http://localhost:3001",      # Puerto alternativo React
+    "http://localhost:5174",      # Puerto alternativo Vite
+    "http://127.0.0.1:3001",      # Alternativa localhost
+    "http://127.0.0.1:5174",      # Alternativa localhost
+    "http://10.0.2.2:8000",       # Android Emulator (para móvil)
+    "http://192.168.0.5:8000",    # Red local (para móvil)
 ]
+
+# Para desarrollo: permitir todos los orígenes de localhost (SOLO PARA DESARROLLO)
+CORS_ALLOW_ALL_ORIGINS = DEBUG  # True en desarrollo, False en producción
+
+# Headers adicionales para React
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-api-key',  # Para APIs con clave
+]
+
+# Métodos HTTP permitidos
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Permitir cookies y credenciales (si React las necesita)
+CORS_ALLOW_CREDENTIALS = True
 
 # --- CSRF ---
 CSRF_TRUSTED_ORIGINS = [
@@ -122,6 +158,12 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",      # Puerto alternativo React
+    "http://localhost:5174",      # Puerto alternativo Vite
+    "http://127.0.0.1:3001",      # Alternativa localhost
+    "http://127.0.0.1:5174",      # Alternativa localhost
+    "http://10.0.2.2:8000",       # Android Emulator
+    "http://192.168.0.5:8000",    # Red local
 ]
 
 

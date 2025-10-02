@@ -276,6 +276,41 @@ class GastoViewSet(viewsets.ModelViewSet):
 
         return Response({'pagados': hechos, 'ya_pagados': ya_pagados}, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['get'], url_path='mis_gastos_pendientes')
+    def mis_gastos_pendientes(self, request):
+        """
+        Endpoint para obtener gastos pendientes del usuario logueado
+        URL: /api/finanzas/gastos/mis_gastos_pendientes/
+        """
+        user = request.user
+        
+        try:
+            # Verificar si es residente
+            from usuarios.models import Residente
+            residente = Residente.objects.get(usuario=user)
+            
+            if residente.propiedad:
+                # Obtener gastos pendientes de su propiedad
+                gastos_pendientes = Gasto.objects.select_related('propiedad').filter(
+                    propiedad=residente.propiedad,
+                    pagado=False
+                ).order_by('-anio', '-mes', '-fecha_emision')
+                
+                serializer = self.get_serializer(gastos_pendientes, many=True)
+                return Response(serializer.data)
+            else:
+                # Si no tiene propiedad asignada
+                return Response([], status=status.HTTP_200_OK)
+                
+        except Residente.DoesNotExist:
+            # Si no es residente, devolver lista vacía
+            return Response([], status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Error al obtener gastos: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 
 # =========================
 #         MULTAS
@@ -427,6 +462,41 @@ class MultaViewSet(viewsets.ModelViewSet):
         # --- FIN CORRECCIÓN ---
 
         return Response({'pagados': hechos, 'ya_pagados': ya_pagados}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='mis_multas_pendientes')
+    def mis_multas_pendientes(self, request):
+        """
+        Endpoint para obtener multas pendientes del usuario logueado
+        URL: /api/finanzas/multas/mis_multas_pendientes/
+        """
+        user = request.user
+        
+        try:
+            # Verificar si es residente
+            from usuarios.models import Residente
+            residente = Residente.objects.get(usuario=user)
+            
+            if residente.propiedad:
+                # Obtener multas pendientes de su propiedad
+                multas_pendientes = Multa.objects.select_related('propiedad').filter(
+                    propiedad=residente.propiedad,
+                    pagado=False
+                ).order_by('-anio', '-mes', '-fecha_emision')
+                
+                serializer = self.get_serializer(multas_pendientes, many=True)
+                return Response(serializer.data)
+            else:
+                # Si no tiene propiedad asignada
+                return Response([], status=status.HTTP_200_OK)
+                
+        except Residente.DoesNotExist:
+            # Si no es residente, devolver lista vacía
+            return Response([], status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Error al obtener multas: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 # =========================

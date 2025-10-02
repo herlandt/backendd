@@ -25,13 +25,71 @@ class AreaComun(models.Model):
         return self.nombre
 
 class Aviso(models.Model):
-    # ... (tu código de Aviso aquí)
     titulo = models.CharField(max_length=200)
     contenido = models.TextField()
     fecha_publicacion = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True, help_text="Determina si el aviso está activo y visible")
+    dirigido_a = models.CharField(
+        max_length=20, 
+        choices=[
+            ('TODOS', 'Todos los residentes'),
+            ('PROPIETARIOS', 'Solo propietarios'),
+            ('INQUILINOS', 'Solo inquilinos'),
+        ],
+        default='TODOS',
+        help_text="A quién está dirigido el aviso"
+    )
+
+    class Meta:
+        ordering = ['-fecha_publicacion']
+        verbose_name = "Aviso"
+        verbose_name_plural = "Avisos"
 
     def __str__(self):
         return self.titulo
+
+    def total_residentes_objetivo(self):
+        """Retorna el total de residentes a los que está dirigido el aviso"""
+        from usuarios.models import Residente
+        
+        if self.dirigido_a == 'TODOS':
+            return Residente.objects.count()
+        elif self.dirigido_a == 'PROPIETARIOS':
+            return Residente.objects.filter(rol='propietario').count()
+        elif self.dirigido_a == 'INQUILINOS':
+            return Residente.objects.filter(rol='inquilino').count()
+        return 0
+
+    def residentes_que_leyeron(self):
+        """Retorna queryset de residentes que leyeron este aviso"""
+        return self.lecturas.select_related('residente__usuario')
+
+    def total_lecturas(self):
+        """Retorna el número total de lecturas"""
+        return self.lecturas.count()
+
+    def porcentaje_lectura(self):
+        """Retorna el porcentaje de residentes que leyeron el aviso"""
+        total_objetivo = self.total_residentes_objetivo()
+        if total_objetivo == 0:
+            return 0
+        return round((self.total_lecturas() / total_objetivo) * 100, 2)
+
+class LecturaAviso(models.Model):
+    """Modelo para rastrear qué residentes han leído cada aviso"""
+    aviso = models.ForeignKey(Aviso, on_delete=models.CASCADE, related_name='lecturas')
+    residente = models.ForeignKey('usuarios.Residente', on_delete=models.CASCADE, related_name='avisos_leidos')
+    fecha_lectura = models.DateTimeField(auto_now_add=True)
+    ip_lectura = models.GenericIPAddressField(null=True, blank=True, help_text="IP desde donde se leyó el aviso")
+
+    class Meta:
+        unique_together = ('aviso', 'residente')
+        ordering = ['-fecha_lectura']
+        verbose_name = "Lectura de Aviso"
+        verbose_name_plural = "Lecturas de Avisos"
+
+    def __str__(self):
+        return f"{self.residente.usuario.username} leyó '{self.aviso.titulo}'"
         
 class Regla(models.Model):
     # ... (tu código de Regla aquí)

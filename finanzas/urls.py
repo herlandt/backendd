@@ -15,6 +15,12 @@ from .views import (
     EgresoViewSet, IngresoViewSet, ReporteFinancieroView,ReporteUsoAreasComunesView 
 )
 
+# Importar vistas de Stripe
+from .stripe_views import (
+    CreatePaymentIntentView, CreateSetupIntentView, 
+    StripeWebhookView, PaymentStatusView
+)
+
 router = DefaultRouter()
 router.register(r"gastos", GastoViewSet, basename="gasto")
 router.register(r"pagos", PagoViewSet, basename="pago")  # Restaurado
@@ -48,6 +54,17 @@ urlpatterns = [
     # Utilidades admin/usuario
     path("expensas/generar/", GenerarExpensasView.as_view(), name="generar-expensas"),
     path("estado-de-cuenta/", EstadoDeCuentaView.as_view(), name="estado-de-cuenta"),
+    
+    # URLs para Flutter App
+    path("estado-cuenta-unificado/", EstadoDeCuentaView.as_view(), name="estado-cuenta-unificado"),
+    path("historial-pagos-unificados/", PagoViewSet.as_view({'get': 'list'}), name="historial-pagos-unificados"),
+    
+    # URLs de Stripe para móvil
+    path("stripe/payment-intent/", CreatePaymentIntentView.as_view(), name="stripe-payment-intent"),
+    path("stripe/setup-intent/", CreateSetupIntentView.as_view(), name="stripe-setup-intent"),
+    path("stripe/webhook/", StripeWebhookView.as_view(), name="stripe-webhook"),
+    path("stripe/payment-status/<str:payment_intent_id>/", PaymentStatusView.as_view(), name="stripe-payment-status"),
+    
  path('reportes/financiero/', ReporteFinancieroView.as_view(), name='reporte-financiero'),
 path('reportes/uso-areas-comunes/', ReporteUsoAreasComunesView.as_view(), name='reporte-uso-areas-comunes'),
 ]

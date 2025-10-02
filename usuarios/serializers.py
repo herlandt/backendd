@@ -34,7 +34,7 @@ class ResidenteWriteSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150, required=False)
     email = serializers.EmailField(required=False)
     password = serializers.CharField(write_only=True, required=False)
-    propiedad_id = serializers.IntegerField() # Este sigue siendo requerido
+    propiedad_id = serializers.IntegerField(required=False)  # ✅ CAMBIADO: Ahora es opcional
     rol = serializers.ChoiceField(choices=Residente.ROL_CHOICES) # Y este también
 
     def validate(self, data):
@@ -76,7 +76,7 @@ class ResidenteWriteSerializer(serializers.Serializer):
         # Finalmente, crea el perfil de Residente y lo asocia
         residente = Residente.objects.create(
             usuario=user,
-            propiedad_id=validated_data['propiedad_id'],
+            propiedad_id=validated_data.get('propiedad_id'),  # ✅ CAMBIADO: Usar get() para permitir None
             rol=validated_data['rol']
         )
         return residente

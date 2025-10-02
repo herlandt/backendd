@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Debug Login Flow - React</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #dc3545;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .problem-alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #c82333;
+        }
+        .test-button.success {
+            background: #28a745;
+        }
+        .test-button.success:hover {
+            background: #218838;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            color: #0c5460;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        .step {
+            background: #e7f3ff;
+            border-left: 4px solid #0066cc;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 DIAGNÓSTICO: Problema de Redirección Post-Login</h1>
+        
+        <div class="problem-alert">
+            <h3>🚨 PROBLEMA IDENTIFICADO</h3>
+            <p><strong>Síntoma:</strong> Login exitoso pero no redirige, se queda en página de login</p>
+            <p><strong>Logs:</strong> Token obtenido correctamente, perfil cargado, pero sin navegación</p>
+            <p><strong>Causa:</strong> Problema en el manejo de estado de autenticación en React</p>
+        </div>
+
+        <!-- Diagnóstico del Estado -->
+        <div class="test-section">
+            <h3>📋 Paso 1: Verificar Estado Actual</h3>
+            <p>Verifica qué hay guardado en localStorage y el estado del backend</p>
+            <button class="test-button" onclick="checkCurrentState()">Verificar Estado</button>
+            <div id="state-result"></div>
+        </div>
+
+        <!-- Test Login Backend -->
+        <div class="test-section">
+            <h3>🔑 Paso 2: Probar Login Backend</h3>
+            <p>Verifica que el backend funcione correctamente (debe ser exitoso)</p>
+            <button class="test-button" onclick="testBackendLogin()">Probar Backend</button>
+            <div id="backend-result"></div>
+        </div>
+
+        <!-- Simular React Flow -->
+        <div class="test-section">
+            <h3>⚡ Paso 3: Simular Flujo React Completo</h3>
+            <p>Simula exactamente lo que React debería hacer después del login</p>
+            <button class="test-button" onclick="simulateReactFlow()">Simular React Flow</button>
+            <div id="react-flow-result"></div>
+        </div>
+
+        <!-- Soluciones -->
+        <div class="test-section">
+            <h3>🎯 Paso 4: Implementar Solución</h3>
+            <p>Códigos específicos para corregir el problema en React</p>
+            <button class="test-button success" onclick="showSolutions()">Ver Soluciones</button>
+            <div id="solutions-result"></div>
+        </div>
+
+        <!-- Limpieza -->
+        <div class="test-section">
+            <h3>🧹 Limpiar Estado</h3>
+            <p>Limpia localStorage para empezar de cero</p>
+            <button class="test-button" onclick="clearAll()" style="background: #6c757d;">Limpiar Todo</button>
+            <div id="clear-result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000/api';
+        
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function checkCurrentState() {
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            const allKeys = Object.keys(localStorage);
+            
+            let userInfo = 'No hay datos de usuario';
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    userInfo = `Usuario: ${userData.username || 'N/A'}, Email: ${userData.email || 'N/A'}`;
+                } catch (e) {
+                    userInfo = 'Datos de usuario corruptos';
+                }
+            }
+            
+            const result = `
+📊 ESTADO ACTUAL DEL NAVEGADOR:
+
+🔑 Token: ${token ? '✅ SÍ (' + token.substring(0, 30) + '...)' : '❌ NO'}
+👤 Usuario: ${user ? '✅ SÍ' : '❌ NO'}
+${userInfo}
+
+📦 Items en localStorage: ${allKeys.length}
+${allKeys.length > 0 ? '   - ' + allKeys.join(', ') : '   - Vacío'}
+
+🎯 DIAGNÓSTICO:
+${token && user ? '✅ Datos completos - React debería estar autenticado' : '❌ Faltan datos - React debería mostrar login'}
+
+🔧 PROBLEMA PROBABLE:
+${token && user ? 'React no está leyendo correctamente el localStorage' : 'El login no está guardando los datos correctamente'}
+            `;
+            
+            showResult('state-result', result, token && user ? 'success' : 'warning');
+        }
+
+        async function testBackendLogin() {
+            showResult('backend-result', '🔄 Probando login en backend...', 'info');
+            
+            try {
+                // Login
+                const loginResponse = await fetch(`${API_BASE}/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'residente1',
+                        password: 'isaelOrtiz2'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                
+                if (!loginResponse.ok) {
+                    throw new Error(`Login falló: ${loginResponse.status} - ${JSON.stringify(loginData)}`);
+                }
+                
+                if (!loginData.token) {
+                    throw new Error('No se recibió token del backend');
+                }
+                
+                // Verificar perfil
+                const profileResponse = await fetch(`${API_BASE}/usuarios/perfil/`, {
+                    headers: {
+                        'Authorization': `Token ${loginData.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const profileData = await profileResponse.json();
+                
+                if (!profileResponse.ok) {
+                    throw new Error(`Perfil falló: ${profileResponse.status} - ${JSON.stringify(profileData)}`);
+                }
+                
+                const result = `
+✅ BACKEND FUNCIONANDO PERFECTAMENTE:
+
+🔐 Login Response:
+   Status: ${loginResponse.status}
+   Token: ${loginData.token.substring(0, 40)}...
+   User: ${JSON.stringify(loginData.user || {}, null, 2)}
+
+👤 Profile Response:
+   Status: ${profileResponse.status}
+   Username: ${profileData.username}
+   Email: ${profileData.email}
+   Rol: ${profileData.rol || 'N/A'}
+
+🎯 CONCLUSIÓN:
+El backend Django funciona perfectamente. El problema está en React.
+                `;
+                
+                showResult('backend-result', result, 'success');
+                
+            } catch (error) {
+                const result = `
+❌ ERROR EN BACKEND:
+
+${error.message}
+
+🔧 VERIFICAR:
+1. ¿Está corriendo el servidor Django en http://127.0.0.1:8000?
+2. ¿Las credenciales son correctas?
+3. ¿Hay problemas de CORS?
+                `;
+                
+                showResult('backend-result', result, 'error');
+            }
+        }
+
+        async function simulateReactFlow() {
+            showResult('react-flow-result', '🔄 Simulando flujo completo de React...', 'info');
+            
+            try {
+                // Paso 1: Login (como lo hace React)
+                console.log('🔑 Paso 1: Login como React');
+                const loginResponse = await fetch(`${API_BASE}/login/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'residente1',
+                        password: 'isaelOrtiz2'
+                    })
+                });
+                
+                const loginData = await loginResponse.json();
+                if (!loginResponse.ok || !loginData.token) {
+                    throw new Error('Login falló');
+                }
+                
+                // Paso 2: Guardar en localStorage (como lo hace React)
+                console.log('💾 Paso 2: Guardar en localStorage');
+                localStorage.setItem('token', loginData.token);
+                if (loginData.user) {
+                    localStorage.setItem('user', JSON.stringify(loginData.user));
+                }
+                
+                // Paso 3: Obtener perfil (como lo hace React)
+                console.log('👤 Paso 3: Obtener perfil');
+                const profileResponse = await fetch(`${API_BASE}/usuarios/perfil/`, {
+                    headers: {
+                        'Authorization': `Token ${loginData.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const profileData = await profileResponse.json();
+                if (!profileResponse.ok) {
+                    throw new Error('Perfil falló');
+                }
+                
+                // Paso 4: Simular estado React
+                console.log('⚛️ Paso 4: Simular actualización de estado React');
+                const reactState = {
+                    isAuthenticated: true,
+                    user: profileData,
+                    token: loginData.token,
+                    loading: false
+                };
+                
+                // Paso 5: Simular navegación
+                console.log('🧭 Paso 5: Simular navegación');
+                const shouldNavigate = reactState.isAuthenticated && !reactState.loading;
+                
+                const result = `
+✅ FLUJO REACT SIMULADO EXITOSAMENTE:
+
+🔑 Login: ✅ Token obtenido
+💾 localStorage: ✅ Datos guardados
+👤 Perfil: ✅ Datos obtenidos
+⚛️ Estado React simulado:
+   - isAuthenticated: ${reactState.isAuthenticated}
+   - user: ${reactState.user.username}
+   - token: ${reactState.token.substring(0, 20)}...
+   - loading: ${reactState.loading}
+
+🧭 Navegación: ${shouldNavigate ? '✅ DEBERÍA NAVEGAR' : '❌ NO DEBERÍA NAVEGAR'}
+
+🔧 LO QUE REACT DEBE HACER AHORA:
+1. Actualizar isAuthenticated = true
+2. Guardar user en estado
+3. Ejecutar navigate('/dashboard')
+
+💡 SI NO NAVEGA, EL PROBLEMA ESTÁ EN:
+- useAuth no actualiza isAuthenticated
+- LoginPage no ejecuta navigate()
+- Router no redirige correctamente
+                `;
+                
+                showResult('react-flow-result', result, 'success');
+                
+            } catch (error) {
+                showResult('react-flow-result', `❌ ERROR: ${error.message}`, 'error');
+            }
+        }
+
+        function showSolutions() {
+            const solutions = `
+🎯 SOLUCIONES ESPECÍFICAS PARA REACT:
+
+═══════════════════════════════════════════════════════════════
+
+1️⃣ CORREGIR useAuth.ts:
+
+const login = async (username: string, password: string) => {
+  try {
+    const response = await apiLogin(username, password);
+    
+    if (response.token) {
+      // Guardar token
+      localStorage.setItem('token', response.token);
+      
+      // Obtener perfil
+      const userProfile = await getUserProfile();
+      
+      // ✅ CRUCIAL: Actualizar estado
+      setIsAuthenticated(true);
+      setUser(userProfile);
+      setToken(response.token);
+      
+      // ✅ CRUCIAL: Retornar success
+      return { success: true, user: userProfile };
+    }
+  } catch (error) {
+    return { success: false, error };
+  }
+};
+
+═══════════════════════════════════════════════════════════════
+
+2️⃣ CORREGIR LoginPage.tsx:
+
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    const result = await login(formData.username, formData.password);
+    
+    // ✅ CRUCIAL: Verificar success y navegar
+    if (result.success) {
+      console.log('✅ Login exitoso, navegando...');
+      navigate('/dashboard'); // ← ESTA LÍNEA DEBE EJECUTARSE
+    } else {
+      setError('Credenciales incorrectas');
+    }
+  } catch (error) {
+    setError('Error de conexión');
+  }
+};
+
+═══════════════════════════════════════════════════════════════
+
+3️⃣ VERIFICAR Router (App.tsx):
+
+function App() {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) return <div>Cargando...</div>;
+  
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />
+        } />
+        <Route path="/dashboard" element={
+          isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
+        } />
+        <Route path="/" element={
+          <Navigate to={isAuthenticated ? "/dashboard" : "/login"} />
+        } />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+═══════════════════════════════════════════════════════════════
+
+4️⃣ SOLUCIÓN RÁPIDA TEMPORAL:
+
+// En LoginPage.tsx, después del login:
+if (result.success) {
+  // Si navigate() no funciona, usar:
+  window.location.href = '/dashboard';
+  // O forzar recarga:
+  // window.location.reload();
+}
+
+═══════════════════════════════════════════════════════════════
+
+🔍 DEBUGGING:
+1. Verificar que aparezcan estos logs:
+   ✅ Login exitoso, navegando...
+   ✅ Estado actualizado en useAuth
+
+2. Si no aparecen, el problema está en:
+   - result.success no es true
+   - navigate() no se ejecuta
+   - isAuthenticated no se actualiza
+
+3. Usar React DevTools para verificar estado
+            `;
+            
+            showResult('solutions-result', solutions, 'info');
+        }
+
+        function clearAll() {
+            localStorage.clear();
+            showResult('clear-result', '🧹 localStorage limpiado. Refresh React app.', 'success');
+            console.log('🧹 Estado limpiado');
+        }
+
+        // Auto-check al cargar
+        window.onload = function() {
+            setTimeout(checkCurrentState, 1000);
+        };
+    </script>
+</body>
+</html>
