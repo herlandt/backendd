@@ -11,7 +11,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # --- Seguridad / Debug (ojo en producción) ---
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = ['10.0.2.2', 'localhost', '127.0.0.1', '192.168.0.18']
+ALLOWED_HOSTS = [
+    '10.0.2.2', 
+    'localhost', 
+    '127.0.0.1', 
+    '192.168.0.18',
+    '192.168.0.5',    # Nueva IP detectada
+    '172.18.128.1',   # Nueva IP detectada
+    '0.0.0.0',        # Permite todas las IPs (solo para desarrollo)
+]
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
