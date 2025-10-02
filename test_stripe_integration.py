@@ -5,18 +5,18 @@ import json
 # Configuración
 BASE_URL = "http://127.0.0.1:8000"
 API_KEY = "tu-api-key-aqui"  # Cambia por tu API key
-USERNAME = "admin"  # Cambia por tu usuario
-PASSWORD = "admin"  # Cambia por tu contraseña
+USERNAME = "stripe_test"  # Usuario de prueba creado
+PASSWORD = "test123"  # Contraseña del usuario de prueba
 
 def get_auth_token():
     """Obtiene token de autenticación"""
     try:
-        response = requests.post(f"{BASE_URL}/api/token/", {
+        response = requests.post(f"{BASE_URL}/api/login/", {
             "username": USERNAME,
             "password": PASSWORD
         })
         if response.status_code == 200:
-            return response.json()["access"]
+            return response.json()["token"]
         else:
             print(f"Error al obtener token: {response.status_code}")
             print(response.text)
@@ -30,7 +30,7 @@ def test_create_payment_intent(token):
     print("\n=== Test: Create Payment Intent ===")
     
     headers = {
-        "Authorization": f"Bearer {token}",
+        "Authorization": f"Token {token}",
         "Content-Type": "application/json"
     }
     
@@ -62,7 +62,7 @@ def test_create_setup_intent(token):
     print("\n=== Test: Create Setup Intent ===")
     
     headers = {
-        "Authorization": f"Bearer {token}",
+        "Authorization": f"Token {token}",
         "Content-Type": "application/json"
     }
     
@@ -89,7 +89,7 @@ def test_payment_status(token, payment_intent_id):
     print(f"\n=== Test: Payment Status for {payment_intent_id} ===")
     
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Token {token}"
     }
     
     try:

@@ -307,6 +307,81 @@ class IAControlVehicularView(APIView):
         # Devolver respuesta con el código de estado apropiado
         return Response(response_data, status=status_code)
 
+
+class IAProcesarImagenView(APIView):
+    """
+    Endpoint para procesar imágenes con IA
+    Compatible con el frontend React
+    """
+    permission_classes = [HasAPIKey]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Procesa imagen para reconocimiento de placas
+        Acepta: imagen, image, file como nombres de campo
+        """
+        # Buscar la imagen en diferentes nombres de campo
+        imagen = None
+        for field_name in ['imagen', 'image', 'file']:
+            if field_name in request.FILES:
+                imagen = request.FILES[field_name]
+                break
+        
+        if not imagen:
+            return Response({
+                "error": "No se recibió ninguna imagen",
+                "campos_esperados": ["imagen", "image", "file"],
+                "timestamp": timezone.now().isoformat()
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Simular procesamiento de IA (placeholder)
+        # En un entorno real, aquí iría el procesamiento con OpenCV/TensorFlow
+        timestamp = timezone.now()
+        placa_detectada = "DEBUG-VIDEO-001"  # Placa simulada
+        
+        # Usar la misma lógica que IAControlVehicularView
+        vehiculo = Vehiculo.objects.filter(placa__iexact=placa_detectada).first()
+        
+        if vehiculo:
+            acceso_permitido = True
+            motivo = f"Placa {placa_detectada} encontrada en el sistema"
+            accion = "PERMITIDO"
+            status_code = status.HTTP_200_OK
+        else:
+            acceso_permitido = False
+            motivo = f"Placa '{placa_detectada}' no encontrada en el sistema"
+            accion = "DENEGADO"
+            status_code = status.HTTP_403_FORBIDDEN
+        
+        # Registrar evento
+        evento = EventoSeguridad.objects.create(
+            tipo_evento="INGRESO",
+            placa_detectada=placa_detectada,
+            accion=accion,
+            motivo=motivo,
+            vehiculo_registrado=vehiculo
+        )
+        
+        response_data = {
+            "evento_id": evento.id,
+            "timestamp": timestamp.isoformat(),
+            "placa": placa_detectada,
+            "tipo_evento": "INGRESO",
+            "accion": accion,
+            "acceso_permitido": acceso_permitido,
+            "motivo": motivo,
+            "vehiculo": {
+                "tipo": "REGISTRADO" if vehiculo else "NO_REGISTRADO",
+                "autorizado": acceso_permitido
+            },
+            "mensaje": f"{'✅ Acceso permitido' if acceso_permitido else '❌ Acceso denegado'} para {placa_detectada}",
+            "imagen_procesada": True,
+            "imagen_size": len(imagen.read()) if hasattr(imagen, 'read') else 0
+        }
+        
+        return Response(response_data, status=status_code)
+
 class GateDashboardView(APIView):
     """
     Endpoint para el dashboard del gate

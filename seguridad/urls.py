@@ -16,6 +16,7 @@ from .views import (
     DashboardSeriesView,
     DashboardTopVisitantesView,
     IAControlVehicularView,
+    IAProcesarImagenView,  # Nueva vista
     VerificarRostroView,
     DeteccionListView,
     GateDashboardView,  # 🆕 Nueva vista
@@ -37,6 +38,7 @@ urlpatterns = [
     path("dashboard/series/", DashboardSeriesView.as_view(), name="dashboard-series"),
     path("dashboard/top-visitantes/", DashboardTopVisitantesView.as_view(), name="dashboard-top-visitantes"),
     path('ia/control-vehicular/', IAControlVehicularView.as_view(), name='ia-control-vehicular'),
+    path('ia/procesar-imagen/', IAProcesarImagenView.as_view(), name='ia-procesar-imagen'),  # Nueva URL
     path('ia/verificar-rostro/', VerificarRostroView.as_view(), name='ia-verificar-rostro'),
     path('gate/dashboard/', GateDashboardView.as_view(), name='gate-dashboard'),  # 🆕 Nueva URL
     path("detecciones/", DeteccionListView.as_view(), name="detecciones"),
